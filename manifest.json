@@ -7,6 +7,11 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "environment": {
+    "r": {
+        "requires": ">=4.0.0,<5.0" 
+    }
+},
   "icons": [
     {
       "src": "icon-192.png",
