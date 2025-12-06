@@ -11,7 +11,6 @@ library(openxlsx)
 library(DBI)
 library(RPostgres)
 library(pool)
-library(rsconnect)
 library(httr)
 library(jsonlite)
 
