@@ -3108,177 +3108,177 @@ get_recent_sessions <- function() {
     query <-"
       SELECT session_id, MAX(created_at) as last_activity
       FROM (
-        SELECT session_id, created_at FROM app_data_6000 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6000 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6010 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6010 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6020 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6020 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6030 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6030 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6110 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6110 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6110.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6110.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6110.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6110.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6120 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6120 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6120.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6120.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6120.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6120.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6130 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6130 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6130.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6130.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6130.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6130.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6141 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6141 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6141.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6141.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6141.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6141.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6142 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6142 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6142.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6142.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6142.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6142.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6143 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6143 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6150 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6150 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6160 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6160 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6170 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6170 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6171 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6171 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6172 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6172 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6210 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6210 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6210.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6210.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6210.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6210.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6220 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6220 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6220.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6220.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6220.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6220.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6230 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6230 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6230.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6230.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6230.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6230.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6240 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6240 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6240.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6240.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6240.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6240.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6250 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6250 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6250.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6250.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6250.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6250.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6261 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6261 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6261.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6261.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6261.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6261.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6262 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6262 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6262.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6262.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6262.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6262.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6263 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6263 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6263.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6263.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6263.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6263.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6264 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6264 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6264.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6264.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6264.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6264.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6271 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6271 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6271.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6271.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6271.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6271.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6272 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6272 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6272.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6272.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6272.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6272.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6273 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6273 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6274 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6274 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6275 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6275 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6275.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6275.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6275.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6275.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6276 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6276 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6276.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6276.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6276.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6276.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6277 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6277 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6277.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6277.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6277.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6277.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6281 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6281 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6281.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6281.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6281.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6281.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6282 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6282 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6291 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6291 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6292 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6292 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6292.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6292.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6292.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6292.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6293 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6293 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6293.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6293.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6293.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6293.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6294 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6294 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6294.1 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6294.1 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6294.2 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6294.2 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6310 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6310 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6320 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6320 WHERE session_id IS NOT NULL AND session_id != ''
         UNION ALL
-        SELECT session_id, created_at FROM app_data_6330 WHERE session_id IS NOT NULL AND session_id !="
+        SELECT session_id, created_at FROM app_data_6330 WHERE session_id IS NOT NULL AND session_id != ''
       ) AS all_sessions
       GROUP BY session_id
       ORDER BY last_activity DESC
@@ -3312,8 +3312,8 @@ initialize_database_simple <- function() {
 
     tables <- list(
       
-#6000, 6010, 6020, 6030
-app_data_6000 = "
+    #6000, 6010, 6020, 6030
+    app_data_6000 = "
         CREATE TABLE IF NOT EXISTS app_data_6000 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3381,7 +3381,7 @@ app_data_6000 = "
 
     #6110, 6110.1, 6110.2
 
-app_data_6110 = "
+    app_data_6110 = "
         CREATE TABLE IF NOT EXISTS app_data_6110 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3431,7 +3431,7 @@ app_data_6110 = "
 
     #6120, 6120.1, 6120.2
 
-app_data_6120 = "
+    app_data_6120 = "
         CREATE TABLE IF NOT EXISTS app_data_6120 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3484,7 +3484,7 @@ app_data_6120 = "
 
     #6130, 6130.1, 6130.2
 
-app_data_6130 = "
+    app_data_6130 = "
         CREATE TABLE IF NOT EXISTS app_data_6130 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3536,7 +3536,7 @@ app_data_6130 = "
 
     #6141, 6141.1, 6141.2
 
-app_data_6141 = "
+    app_data_6141 = "
         CREATE TABLE IF NOT EXISTS app_data_6141 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3588,7 +3588,7 @@ app_data_6141 = "
 
     #6142, 6142.1, 6142.2
 
-app_data_6142 = "
+    app_data_6142 = "
         CREATE TABLE IF NOT EXISTS app_data_6142 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3698,7 +3698,7 @@ app_data_6142 = "
 
     #6170, 6171, 6172
 
-app_data_6170 = "
+    app_data_6170 = "
         CREATE TABLE IF NOT EXISTS app_data_6170 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3750,7 +3750,7 @@ app_data_6170 = "
 
     #6210, 6210.1, 6210.2
 
-app_data_6210 = "
+     app_data_6210 = "
         CREATE TABLE IF NOT EXISTS app_data_6210 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3800,7 +3800,7 @@ app_data_6210 = "
 
     #6220, 6220.1, 6220.2
 
-app_data_6220 = "
+     app_data_6220 = "
         CREATE TABLE IF NOT EXISTS app_data_6220 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3850,7 +3850,7 @@ app_data_6220 = "
 
     #6230, 6230.1, 6230.2
 
-app_data_6230 = "
+    app_data_6230 = "
         CREATE TABLE IF NOT EXISTS app_data_6230 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3902,7 +3902,7 @@ app_data_6230 = "
 
     #6240, 6240.1, 6240.2
 
-app_data_6240 = "
+    app_data_6240 = "
         CREATE TABLE IF NOT EXISTS app_data_6240 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -3952,7 +3952,7 @@ app_data_6240 = "
 
     #6250, 6250.1, 6250.2
 
-app_data_6250 = "
+    app_data_6250 = "
         CREATE TABLE IF NOT EXISTS app_data_6250 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -4002,7 +4002,7 @@ app_data_6250 = "
 
     #6261, 6261.1, 6261.2
 
-app_data_6261 = "
+    app_data_6261 = "
         CREATE TABLE IF NOT EXISTS app_data_6261 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -4058,7 +4058,7 @@ app_data_6261 = "
 
     #6262, 6262.1, 6262.2
 
-app_data_6262 = "
+    app_data_6262 = "
         CREATE TABLE IF NOT EXISTS app_data_6262 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -4114,7 +4114,7 @@ app_data_6262 = "
 
     #6263, 6263.1, 6263.2
 
-app_data_6263 = "
+   app_data_6263 = "
         CREATE TABLE IF NOT EXISTS app_data_6263 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -4170,7 +4170,7 @@ app_data_6263 = "
 
     #6264, 6264.1, 6264.2
 
-app_data_6264 = "
+    app_data_6264 = "
         CREATE TABLE IF NOT EXISTS app_data_6264 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -4226,7 +4226,7 @@ app_data_6264 = "
 
     #6271, 6271.1, 6271.2
 
-app_data_6271 = "
+    app_data_6271 = "
         CREATE TABLE IF NOT EXISTS app_data_6271 (
           id SERIAL PRIMARY KEY,
           session_id VARCHAR(255) NOT NULL,
@@ -4832,7 +4832,8 @@ app_data_6294 = "
          correspondence_credit VARCHAR(255),
          accounting_notes VARCHAR(255),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )",
+        )"
+     )
 
  for (table_name in names(tables)) {
       dbExecute(conn, tables[[table_name]])
@@ -14091,6 +14092,7 @@ if (!is.null(data$df6330)) {
     save_success <- FALSE
     error_messages <- c(error_messages, "Ошибка сохранения таблицы 6330")
   }
+}
 
     if (save_success) {
       shinyalert("Успех", paste("Сессия сохранена:", current_session), type = "success")
@@ -27815,4 +27817,3 @@ observe({ if (!is.null(input$table6330Item1) && !any(is.na(input$dates6330))) {
 
 }
 shinyApp(ui, server)
-
