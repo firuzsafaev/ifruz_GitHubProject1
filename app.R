@@ -8048,61 +8048,7 @@ data <- reactiveValues(
 	                choices = choices, width = "100%")
 	  })
 	  
-	  # Инициализация данных из глобальных переменных
-	  observe({
-	    data$df7010_1 <- copy(DF7010_1)
-	    data$df7010_2 <- copy(DF7010_2)
-	    data$df7010_3 <- copy(DF7010_3)
-	
-	    data$df7110_1 <- copy(DF7110_1)
-	    data$df7110_2 <- copy(DF7110_2)
-	    data$df7110_3 <- copy(DF7110_3)
-	
-	    data$df7210_1 <- copy(DF7210_1)
-	    data$df7210_2 <- copy(DF7210_2)
-	    data$df7210_3 <- copy(DF7210_3)
-
-	    data$df7310 <- copy(DF7310)
-	    data$df7310_3 <- copy(DF7310_3)
-	    data$df7310.1 <- copy(DF7310.1)
-	    data$df7310.1_2 <- copy(DF7310.1_2)
-	    data$df7310.2 <- copy(DF7310.2)
-	    data$df7310.2_2 <- copy(DF7310.2_2)
-
-	    data$df7320 <- copy(DF7320)
-	    data$df7320_3 <- copy(DF7320_3)
-	    data$df7320.1 <- copy(DF7320.1)
-	    data$df7320.1_2 <- copy(DF7320.1_2)
-	    data$df7320.2 <- copy(DF7320.2)
-	    data$df7320.2_2 <- copy(DF7320.2_2)
-
-	    data$df7330 <- copy(DF7330)
-	    data$df7330_3 <- copy(DF7330_3)
-	    data$df7331 <- copy(DF7331)
-	    data$df7331_2 <- copy(DF7331_2)
-	    data$df7331_3 <- copy(DF7331_3)
-	    data$df7331.1 <- copy(DF7331.1)
-	    data$df7331.1_2 <- copy(DF7331.1_2)
-	    data$df7331.2 <- copy(DF7331.2)
-	    data$df7331.2_2 <- copy(DF7331.2_2)
-	    data$df7332 <- copy(DF7332)
-	    data$df7332_2 <- copy(DF7332_2)
-
-	    data$df7340 <- copy(DF7340)
-	    data$df7340_3 <- copy(DF7340_3)
-	    data$df7340.1 <- copy(DF7340.1)
-	    data$df7340.1_2 <- copy(DF7340.1_2)
-	    data$df7340.2 <- copy(DF7340.2)
-	    data$df7340.2_2 <- copy(DF7340.2_2)
-
-	    data$df7350 <- copy(DF7350)
-	    data$df7350_3 <- copy(DF7350_3)
-	    data$df7350.1 <- copy(DF7350.1)
-	    data$df7350.1_2 <- copy(DF7350.1_2)
-	    data$df7350.2 <- copy(DF7350.2)
-	    data$df7350.2_2 <- copy(DF7350.2_2)
-	  })
-  
+ 
 	  observe({
 	    if (!r$db_init_notified) {
 	      init_success <- initialize_database_simple()
