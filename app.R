@@ -112,7 +112,7 @@ load_local_users <- function() {
   if (file.exists(users_file)) {
     load(users_file)
     message("Local users data loaded from file")
-    return(loaded_users)
+    return(users_data)
   }
   return(list())
 }
