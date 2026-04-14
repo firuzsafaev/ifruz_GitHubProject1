@@ -101,34 +101,40 @@ create_database_connection <- function() {
   })
 }
 
-# Глобальная переменная для хранения пользовательских данных между сессиями
-.local_users_data <- reactiveValues(
-  data = list()
-)
+	# Глобальная переменная для хранения пользовательских данных между сессиями
+	.local_users_data <- list(
+		data = list()
+		)
 
-# Функция для загрузки пользователей из локального файла
-load_local_users <- function() {
-  users_file <- "local_users_data.RData"
-  if (file.exists(users_file)) {
-    load(users_file)
-    message("Local users data loaded from file")
-    return(users_data)
-  }
-  return(list())
-}
+	# Функция для загрузки пользователей из локального файла
+	load_local_users <- function() {
+	  users_file <- "local_users_data.RData"
+	  if (file.exists(users_file)) {
+	    loaded_env <- new.env()
+	    load(users_file, envir = loaded_env)
+	    if (exists("users_data", envir = loaded_env)) {
+	      message("Local users data loaded from file")
+	      return(loaded_env$users_data)
+	    } else {
+	      message("File exists but 'users_data' object not found")
+	      return(list())
+	    }
+	  }
+	  return(list())
+	}
 
-# Функция для сохранения пользователей в локальный файл
-save_local_users <- function(users_data) {
-  save(users_data, file = "local_users_data.RData")
-  message("Local users data saved to file")
-}
+	# Функция для сохранения пользователей в локальный файл
+	save_local_users <- function(users_data) {
+	  save(users_data, file = "local_users_data.RData")
+	  message("Local users data saved to file")
+	}
 
-# Инициализация локального хранилища при запуске
-initialize_local_storage <- function() {
-  users_data <- load_local_users()
-  .local_users_data$data <- users_data
-  message("Local storage initialized with ", length(users_data), " users")
-}
+	# Инициализация локального хранилища при запуске
+	initialize_local_storage <- function() {
+	  users_data <- load_local_users()
+	  .local_users_data$data <- users_data
+	  message("Local storage initialized with ", length(users_data), " users")
+	}
 
 # Вызов инициализации при загрузке приложения
 initialize_local_storage()
