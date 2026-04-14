@@ -7360,52 +7360,67 @@ server <- function(input, output, session) {
     data_load_tables = list()
   )
   
-  data <- reactiveValues(
-	    df7010_1 = NULL,
-	    df7010_2 = NULL,
-	    df7010_3 = NULL,
-	    df7110_1 = NULL,
-	    df7110_2 = NULL,
-	    df7110_3 = NULL,
-	    df7210_1 = NULL,
-	    df7210_2 = NULL,
-	    df7210_3 = NULL,
-	    df7310 = NULL,
-	    df7310_3 = NULL,
-	    df7310.1 = NULL,
-	    df7310.1_2 = NULL,
-	    df7310.2 = NULL,
-	    df7310.2_2 = NULL,
-	    df7320 = NULL,
-	    df7320_3 = NULL,
-	    df7320.1 = NULL,
-	    df7320.1_2 = NULL,
-	    df7320.2 = NULL,
-	    df7320.2_2 = NULL,
-	    df7330 = NULL,
-	    df7330_3 = NULL,
-	    df7331 = NULL,
-	    df7331_2 = NULL,
-	    df7331_3 = NULL,
-	    df7331.1 = NULL,
-	    df7331.1_2 = NULL,
-	    df7331.2 = NULL,
-	    df7331.2_2 = NULL,
-	    df7332 = NULL,
-	    df7332_2 = NULL,
-	    df7340 = NULL,
-	    df7340_3 = NULL,
-	    df7340.1 = NULL,
-	    df7340.1_2 = NULL,
-	    df7340.2 = NULL,
-	    df7340.2_2 = NULL,
-	    df7350 = NULL,
-	    df7350_3 = NULL,
-	    df7350.1 = NULL,
-	    df7350.1_2 = NULL,
-	    df7350.2 = NULL,
-	    df7350.2_2 = NULL
-	)
+data <- reactiveValues(
+  # 7010
+  df7010_1 = copy(DF7010_1),
+  df7010_2 = copy(DF7010_2),
+  df7010_3 = copy(DF7010_3),
+  
+  # 7110
+  df7110_1 = copy(DF7110_1),
+  df7110_2 = copy(DF7110_2),
+  df7110_3 = copy(DF7110_3),
+  
+  # 7210
+  df7210_1 = copy(DF7210_1),
+  df7210_2 = copy(DF7210_2),
+  df7210_3 = copy(DF7210_3),
+  
+  # 7310
+  df7310 = copy(DF7310),
+  df7310_3 = copy(DF7310_3),
+  df7310.1 = copy(DF7310.1),
+  df7310.1_2 = copy(DF7310.1_2),
+  df7310.2 = copy(DF7310.2),
+  df7310.2_2 = copy(DF7310.2_2),
+  
+  # 7320
+  df7320 = copy(DF7320),
+  df7320_3 = copy(DF7320_3),
+  df7320.1 = copy(DF7320.1),
+  df7320.1_2 = copy(DF7320.1_2),
+  df7320.2 = copy(DF7320.2),
+  df7320.2_2 = copy(DF7320.2_2),
+  
+  # 7330
+  df7330 = copy(DF7330),
+  df7330_3 = copy(DF7330_3),
+  df7331 = copy(DF7331),
+  df7331_2 = copy(DF7331_2),
+  df7331_3 = copy(DF7331_3),
+  df7331.1 = copy(DF7331.1),
+  df7331.1_2 = copy(DF7331.1_2),
+  df7331.2 = copy(DF7331.2),
+  df7331.2_2 = copy(DF7331.2_2),
+  df7332 = copy(DF7332),
+  df7332_2 = copy(DF7332_2),
+  
+  # 7340
+  df7340 = copy(DF7340),
+  df7340_3 = copy(DF7340_3),
+  df7340.1 = copy(DF7340.1),
+  df7340.1_2 = copy(DF7340.1_2),
+  df7340.2 = copy(DF7340.2),
+  df7340.2_2 = copy(DF7340.2_2),
+  
+  # 7350
+  df7350 = copy(DF7350),
+  df7350_3 = copy(DF7350_3),
+  df7350.1 = copy(DF7350.1),
+  df7350.1_2 = copy(DF7350.1_2),
+  df7350.2 = copy(DF7350.2),
+  df7350.2_2 = copy(DF7350.2_2)
+)
   
   output$show_loading <- reactive({
     r$show_loading
