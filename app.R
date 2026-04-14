@@ -7106,6 +7106,422 @@ server <- function(input, output, session) {
 	    df7350.2_2 = NULL
 	)
   
+	# функция загрузки данных текущей сессии (расширена для новых таблиц)
+	load_current_session_data <- function() {
+		current_session <- session_id()
+		message("Загрузка данных для текущей сессии: ", current_session)
+    
+	tryCatch({
+	# Загружаем ОБЪЕДИНЕННЫЕ данные для текущей сессии (без дубликатов)
+	loaded_data_7010_1 <- load_merged_session_data("app_data_7010_1", current_session)
+	loaded_data_7110_1 <- load_merged_session_data("app_data_7110_1", current_session)
+	loaded_data_7210_1 <- load_merged_session_data("app_data_7210_1", current_session)
+	loaded_data_7310_1 <- load_merged_session_data("app_data_7310_1", current_session)
+	loaded_data_7310_2 <- load_merged_session_data("app_data_7310_2", current_session)
+	loaded_data_7320_1 <- load_merged_session_data("app_data_7320_1", current_session)
+	loaded_data_7320_2 <- load_merged_session_data("app_data_7320_2", current_session)
+	loaded_data_7331_1 <- load_merged_session_data("app_data_7331_1", current_session)
+	loaded_data_7331_2 <- load_merged_session_data("app_data_7331_2", current_session)
+	loaded_data_7332 <- load_merged_session_data("app_data_7332", current_session)
+	loaded_data_7340_1 <- load_merged_session_data("app_data_7340_1", current_session)
+	loaded_data_7340_2 <- load_merged_session_data("app_data_7340_2", current_session)
+	loaded_data_7350_1 <- load_merged_session_data("app_data_7350_1", current_session)
+	loaded_data_7350_2 <- load_merged_session_data("app_data_7350_2", current_session)
+
+	data$df7010_3 <- copy(DF7010_3)
+	data$df7110_3 <- copy(DF7110_3)
+	data$df7210_3 <- copy(DF7210_3)
+	data$df7310 <- copy(DF7310)
+	data$df7320 <- copy(DF7320)
+	data$df7330 <- copy(DF7330)
+	data$df7331 <- copy(DF7331)
+	data$df7340 <- copy(DF7340)
+	data$df7350 <- copy(DF7350)
+          
+	# Обработка данных 7010_1
+	if (!is.null(loaded_data_7010_1)) {
+	  temp_data <- as.data.table(loaded_data_7010_1)
+	  expected_cols <- c("operation_date", "operation_time", "document_number", "operation_description",
+	                    "accounting_method", "initial_balance", "debit", "credit",
+	                    "correspondence_debit", "correspondence_credit", "final_balance", "username")
+	  if (all(expected_cols %in% names(temp_data))) {
+	    setnames(temp_data, expected_cols,
+	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
+	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
+	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+	    
+	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+
+	    data$df7010_1 <- temp_data
+	  } else {
+	    data$df7010_1 <- copy(DF7010_1)
+	  }
+	} else {
+	  data$df7010_1 <- copy(DF7010_1)
+	}
+	
+	# Обработка данных 7110_1
+	if (!is.null(loaded_data_7110_1)) {
+	  temp_data <- as.data.table(loaded_data_7110_1)
+	  expected_cols <- c("operation_date", "operation_time", "document_number", "operation_description",
+	                    "accounting_method", "initial_balance", "debit", "credit",
+	                    "correspondence_debit", "correspondence_credit", "final_balance", "username")
+	  if (all(expected_cols %in% names(temp_data))) {
+	    setnames(temp_data, expected_cols,
+	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
+	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
+	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+	    
+	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+	    
+	    data$df7110_1 <- temp_data
+	  } else {
+	    data$df7110_1 <- copy(DF7110_1)
+	  }
+	} else {
+	  data$df7110_1 <- copy(DF7110_1)
+	}
+	
+	# Обработка данных 7210_1
+	if (!is.null(loaded_data_7210_1)) {
+	  temp_data <- as.data.table(loaded_data_7210_1)
+	  expected_cols <- c("operation_date", "operation_time", "document_number", "operation_description",
+	                    "accounting_method", "initial_balance", "debit", "credit",
+	                    "correspondence_debit", "correspondence_credit", "final_balance", "username")
+	  if (all(expected_cols %in% names(temp_data))) {
+	    setnames(temp_data, expected_cols,
+	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
+	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
+	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+	    
+	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+	    
+	    data$df7210_1 <- temp_data
+	  } else {
+	    data$df7210_1 <- copy(DF7210_1)
+	  }
+	} else {
+	  data$df7210_1 <- copy(DF7210_1)
+	}
+
+      # Обработка данных 7310.1
+      if (!is.null(loaded_data_7310_1)) {
+        temp_data <- as.data.table(loaded_data_7310_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период расхода",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7310.1 <- temp_data
+        } else {
+          data$df7310.1 <- copy(DF7310.1)
+        }
+      } else {
+        data$df7310.1 <- copy(DF7310.1)
+      }
+      
+      # Обработка данных 7310.2
+      if (!is.null(loaded_data_7310_2)) {
+        temp_data <- as.data.table(loaded_data_7310_2)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период расхода",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7310.2 <- temp_data
+        } else {
+          data$df7310.2 <- copy(DF7310.2)
+        }
+      } else {
+        data$df7310.2 <- copy(DF7310.2)
+      }
+      
+      # Обработка данных 7320.1
+      if (!is.null(loaded_data_7320_1)) {
+        temp_data <- as.data.table(loaded_data_7320_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период расхода",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7320.1 <- temp_data
+        } else {
+          data$df7320.1 <- copy(DF7320.1)
+        }
+      } else {
+        data$df7320.1 <- copy(DF7320.1)
+      }
+      
+      # Обработка данных 7320.2
+      if (!is.null(loaded_data_7320_2)) {
+        temp_data <- as.data.table(loaded_data_7320_2)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период расхода",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7320.2 <- temp_data
+        } else {
+          data$df7320.2 <- copy(DF7320.2)
+        }
+      } else {
+        data$df7320.2 <- copy(DF7320.2)
+      }
+      
+      # Обработка данных 7331.1
+      if (!is.null(loaded_data_7331_1)) {
+        temp_data <- as.data.table(loaded_data_7331_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "operation_description", "accounting_method", "initial_balance",
+                           "credit", "debit", "correspondence_debit", "correspondence_credit",
+                           "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
+                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
+                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7331.1 <- temp_data
+        } else {
+          data$df7331.1 <- copy(DF7331.1)
+        }
+      } else {
+        data$df7331.1 <- copy(DF7331.1)
+      }
+      
+      # Обработка данных 7331.2
+      if (!is.null(loaded_data_7331_2)) {
+        temp_data <- as.data.table(loaded_data_7331_2)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "operation_description", "accounting_method", "initial_balance",
+                           "credit", "debit", "correspondence_debit", "correspondence_credit",
+                           "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
+                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
+                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7331.2 <- temp_data
+        } else {
+          data$df7331.2 <- copy(DF7331.2)
+        }
+      } else {
+        data$df7331.2 <- copy(DF7331.2)
+      }
+      
+      # Обработка данных 7332
+      if (!is.null(loaded_data_7332)) {
+        temp_data <- as.data.table(loaded_data_7332)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "operation_description", "accounting_method", "initial_balance",
+                           "credit", "debit", "correspondence_debit", "correspondence_credit",
+                           "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
+                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
+                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7332 <- temp_data
+        } else {
+          data$df7332 <- copy(DF7332)
+        }
+      } else {
+        data$df7332 <- copy(DF7332)
+      }
+      
+      # Обработка данных 7340.1
+      if (!is.null(loaded_data_7340_1)) {
+        temp_data <- as.data.table(loaded_data_7340_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "operation_description", "accounting_method", "initial_balance",
+                           "credit", "debit", "correspondence_debit", "correspondence_credit",
+                           "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
+                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
+                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7340.1 <- temp_data
+        } else {
+          data$df7340.1 <- copy(DF7340.1)
+        }
+      } else {
+        data$df7340.1 <- copy(DF7340.1)
+      }
+      
+      # Обработка данных 7340.2
+      if (!is.null(loaded_data_7340_2)) {
+        temp_data <- as.data.table(loaded_data_7340_2)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "operation_description", "accounting_method", "initial_balance",
+                           "credit", "debit", "correspondence_debit", "correspondence_credit",
+                           "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
+                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
+                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7340.2 <- temp_data
+        } else {
+          data$df7340.2 <- copy(DF7340.2)
+        }
+      } else {
+        data$df7340.2 <- copy(DF7340.2)
+      }
+      
+      # Обработка данных 7350.1
+      if (!is.null(loaded_data_7350_1)) {
+        temp_data <- as.data.table(loaded_data_7350_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период расхода",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7350.1 <- temp_data
+        } else {
+          data$df7350.1 <- copy(DF7350.1)
+        }
+      } else {
+        data$df7350.1 <- copy(DF7350.1)
+      }
+      
+      # Обработка данных 7350.2
+      if (!is.null(loaded_data_7350_2)) {
+        temp_data <- as.data.table(loaded_data_7350_2)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период расхода",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+          
+          data$df7350.2 <- temp_data
+        } else {
+          data$df7350.2 <- copy(DF7350.2)
+        }
+      } else {
+        data$df7350.2 <- copy(DF7350.2)
+      }
+    
+      update_info <- get_last_update(current_session)
+      if (!is.null(update_info)) {
+        r$current_session_last_update <- update_info$timestamp
+      }
+      
+	      message("Данные текущей сессии загружены")
+      
+	    }, error = function(e) {
+	      message("Ошибка при загрузке данных текущей сессии: ", e$message)
+	})
+      }
+
   output$show_loading <- reactive({
     r$show_loading
   })
@@ -7805,423 +8221,7 @@ server <- function(input, output, session) {
 	      }
 	    }
 	  })
-	  
-	# функция загрузки данных текущей сессии (расширена для новых таблиц)
-	load_current_session_data <- function() {
-		current_session <- session_id()
-		message("Загрузка данных для текущей сессии: ", current_session)
-    
-	tryCatch({
-	# Загружаем ОБЪЕДИНЕННЫЕ данные для текущей сессии (без дубликатов)
-	loaded_data_7010_1 <- load_merged_session_data("app_data_7010_1", current_session)
-	loaded_data_7110_1 <- load_merged_session_data("app_data_7110_1", current_session)
-	loaded_data_7210_1 <- load_merged_session_data("app_data_7210_1", current_session)
-	loaded_data_7310_1 <- load_merged_session_data("app_data_7310_1", current_session)
-	loaded_data_7310_2 <- load_merged_session_data("app_data_7310_2", current_session)
-	loaded_data_7320_1 <- load_merged_session_data("app_data_7320_1", current_session)
-	loaded_data_7320_2 <- load_merged_session_data("app_data_7320_2", current_session)
-	loaded_data_7331_1 <- load_merged_session_data("app_data_7331_1", current_session)
-	loaded_data_7331_2 <- load_merged_session_data("app_data_7331_2", current_session)
-	loaded_data_7332 <- load_merged_session_data("app_data_7332", current_session)
-	loaded_data_7340_1 <- load_merged_session_data("app_data_7340_1", current_session)
-	loaded_data_7340_2 <- load_merged_session_data("app_data_7340_2", current_session)
-	loaded_data_7350_1 <- load_merged_session_data("app_data_7350_1", current_session)
-	loaded_data_7350_2 <- load_merged_session_data("app_data_7350_2", current_session)
-
-	data$df7010_3 <- copy(DF7010_3)
-	data$df7110_3 <- copy(DF7110_3)
-	data$df7210_3 <- copy(DF7210_3)
-	data$df7310 <- copy(DF7310)
-	data$df7320 <- copy(DF7320)
-	data$df7330 <- copy(DF7330)
-	data$df7331 <- copy(DF7331)
-	data$df7340 <- copy(DF7340)
-	data$df7350 <- copy(DF7350)
-          
-	# Обработка данных 7010_1
-	if (!is.null(loaded_data_7010_1)) {
-	  temp_data <- as.data.table(loaded_data_7010_1)
-	  expected_cols <- c("operation_date", "operation_time", "document_number", "operation_description",
-	                    "accounting_method", "initial_balance", "debit", "credit",
-	                    "correspondence_debit", "correspondence_credit", "final_balance", "username")
-	  if (all(expected_cols %in% names(temp_data))) {
-	    setnames(temp_data, expected_cols,
-	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
-	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
-	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-
-	    data$df7010_1 <- temp_data
-	  } else {
-	    data$df7010_1 <- copy(DF7010_1)
-	  }
-	} else {
-	  data$df7010_1 <- copy(DF7010_1)
-	}
-	
-	# Обработка данных 7110_1
-	if (!is.null(loaded_data_7110_1)) {
-	  temp_data <- as.data.table(loaded_data_7110_1)
-	  expected_cols <- c("operation_date", "operation_time", "document_number", "operation_description",
-	                    "accounting_method", "initial_balance", "debit", "credit",
-	                    "correspondence_debit", "correspondence_credit", "final_balance", "username")
-	  if (all(expected_cols %in% names(temp_data))) {
-	    setnames(temp_data, expected_cols,
-	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
-	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
-	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
-	    data$df7110_1 <- temp_data
-	  } else {
-	    data$df7110_1 <- copy(DF7110_1)
-	  }
-	} else {
-	  data$df7110_1 <- copy(DF7110_1)
-	}
-	
-	# Обработка данных 7210_1
-	if (!is.null(loaded_data_7210_1)) {
-	  temp_data <- as.data.table(loaded_data_7210_1)
-	  expected_cols <- c("operation_date", "operation_time", "document_number", "operation_description",
-	                    "accounting_method", "initial_balance", "debit", "credit",
-	                    "correspondence_debit", "correspondence_credit", "final_balance", "username")
-	  if (all(expected_cols %in% names(temp_data))) {
-	    setnames(temp_data, expected_cols,
-	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
-	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
-	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
-	    data$df7210_1 <- temp_data
-	  } else {
-	    data$df7210_1 <- copy(DF7210_1)
-	  }
-	} else {
-	  data$df7210_1 <- copy(DF7210_1)
-	}
-
-      # Обработка данных 7310.1
-      if (!is.null(loaded_data_7310_1)) {
-        temp_data <- as.data.table(loaded_data_7310_1)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "expense_period", "operation_description", "accounting_method",
-                           "initial_balance", "credit", "debit", "correspondence_debit",
-                           "correspondence_credit", "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Период расхода",
-                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
-                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7310.1 <- temp_data
-        } else {
-          data$df7310.1 <- copy(DF7310.1)
-        }
-      } else {
-        data$df7310.1 <- copy(DF7310.1)
-      }
-      
-      # Обработка данных 7310.2
-      if (!is.null(loaded_data_7310_2)) {
-        temp_data <- as.data.table(loaded_data_7310_2)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "expense_period", "operation_description", "accounting_method",
-                           "initial_balance", "credit", "debit", "correspondence_debit",
-                           "correspondence_credit", "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Период расхода",
-                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
-                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7310.2 <- temp_data
-        } else {
-          data$df7310.2 <- copy(DF7310.2)
-        }
-      } else {
-        data$df7310.2 <- copy(DF7310.2)
-      }
-      
-      # Обработка данных 7320.1
-      if (!is.null(loaded_data_7320_1)) {
-        temp_data <- as.data.table(loaded_data_7320_1)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "expense_period", "operation_description", "accounting_method",
-                           "initial_balance", "credit", "debit", "correspondence_debit",
-                           "correspondence_credit", "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Период расхода",
-                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
-                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7320.1 <- temp_data
-        } else {
-          data$df7320.1 <- copy(DF7320.1)
-        }
-      } else {
-        data$df7320.1 <- copy(DF7320.1)
-      }
-      
-      # Обработка данных 7320.2
-      if (!is.null(loaded_data_7320_2)) {
-        temp_data <- as.data.table(loaded_data_7320_2)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "expense_period", "operation_description", "accounting_method",
-                           "initial_balance", "credit", "debit", "correspondence_debit",
-                           "correspondence_credit", "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Период расхода",
-                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
-                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7320.2 <- temp_data
-        } else {
-          data$df7320.2 <- copy(DF7320.2)
-        }
-      } else {
-        data$df7320.2 <- copy(DF7320.2)
-      }
-      
-      # Обработка данных 7331.1
-      if (!is.null(loaded_data_7331_1)) {
-        temp_data <- as.data.table(loaded_data_7331_1)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "operation_description", "accounting_method", "initial_balance",
-                           "credit", "debit", "correspondence_debit", "correspondence_credit",
-                           "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
-                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
-                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7331.1 <- temp_data
-        } else {
-          data$df7331.1 <- copy(DF7331.1)
-        }
-      } else {
-        data$df7331.1 <- copy(DF7331.1)
-      }
-      
-      # Обработка данных 7331.2
-      if (!is.null(loaded_data_7331_2)) {
-        temp_data <- as.data.table(loaded_data_7331_2)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "operation_description", "accounting_method", "initial_balance",
-                           "credit", "debit", "correspondence_debit", "correspondence_credit",
-                           "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
-                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
-                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7331.2 <- temp_data
-        } else {
-          data$df7331.2 <- copy(DF7331.2)
-        }
-      } else {
-        data$df7331.2 <- copy(DF7331.2)
-      }
-      
-      # Обработка данных 7332
-      if (!is.null(loaded_data_7332)) {
-        temp_data <- as.data.table(loaded_data_7332)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "operation_description", "accounting_method", "initial_balance",
-                           "credit", "debit", "correspondence_debit", "correspondence_credit",
-                           "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
-                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
-                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7332 <- temp_data
-        } else {
-          data$df7332 <- copy(DF7332)
-        }
-      } else {
-        data$df7332 <- copy(DF7332)
-      }
-      
-      # Обработка данных 7340.1
-      if (!is.null(loaded_data_7340_1)) {
-        temp_data <- as.data.table(loaded_data_7340_1)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "operation_description", "accounting_method", "initial_balance",
-                           "credit", "debit", "correspondence_debit", "correspondence_credit",
-                           "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
-                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
-                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7340.1 <- temp_data
-        } else {
-          data$df7340.1 <- copy(DF7340.1)
-        }
-      } else {
-        data$df7340.1 <- copy(DF7340.1)
-      }
-      
-      # Обработка данных 7340.2
-      if (!is.null(loaded_data_7340_2)) {
-        temp_data <- as.data.table(loaded_data_7340_2)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "operation_description", "accounting_method", "initial_balance",
-                           "credit", "debit", "correspondence_debit", "correspondence_credit",
-                           "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Содержание операции", "Метод учета",
-                     "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)",
-                     "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7340.2 <- temp_data
-        } else {
-          data$df7340.2 <- copy(DF7340.2)
-        }
-      } else {
-        data$df7340.2 <- copy(DF7340.2)
-      }
-      
-      # Обработка данных 7350.1
-      if (!is.null(loaded_data_7350_1)) {
-        temp_data <- as.data.table(loaded_data_7350_1)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "expense_period", "operation_description", "accounting_method",
-                           "initial_balance", "credit", "debit", "correspondence_debit",
-                           "correspondence_credit", "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Период расхода",
-                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
-                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7350.1 <- temp_data
-        } else {
-          data$df7350.1 <- copy(DF7350.1)
-        }
-      } else {
-        data$df7350.1 <- copy(DF7350.1)
-      }
-      
-      # Обработка данных 7350.2
-      if (!is.null(loaded_data_7350_2)) {
-        temp_data <- as.data.table(loaded_data_7350_2)
-        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
-                           "expense_period", "operation_description", "accounting_method",
-                           "initial_balance", "credit", "debit", "correspondence_debit",
-                           "correspondence_credit", "final_balance", "username")
-        if (all(expected_cols %in% names(temp_data))) {
-          setnames(temp_data, expected_cols,
-                   c("Дата операции", "Время проводки", "Учетный номер",
-                     "Счет № статьи расхода", "Период расхода",
-                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
-                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
-          data$df7350.2 <- temp_data
-        } else {
-          data$df7350.2 <- copy(DF7350.2)
-        }
-      } else {
-        data$df7350.2 <- copy(DF7350.2)
-      }
-    
-      update_info <- get_last_update(current_session)
-      if (!is.null(update_info)) {
-        r$current_session_last_update <- update_info$timestamp
-      }
-      
-	      message("Данные текущей сессии загружены")
-      
-	    }, error = function(e) {
-	      message("Ошибка при загрузке данных текущей сессии: ", e$message)
-	})
-      }
-  
+	   
 	  current_session_data <- reactive({
 	    r$data_version
 	    load_current_session_data()
