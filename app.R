@@ -7360,67 +7360,58 @@ server <- function(input, output, session) {
     data_load_tables = list()
   )
   
-data <- reactiveValues(
-  # 7010
-  df7010_1 = as.data.table(DF7010_1),
-  df7010_2 = as.data.table(DF7010_2),
-  df7010_3 = as.data.table(DF7010_3),
-  
-  # 7110
-  df7110_1 = as.data.table(DF7110_1),
-  df7110_2 = as.data.table(DF7110_2),
-  df7110_3 = as.data.table(DF7110_3),
-  
-  # 7210
-  df7210_1 = as.data.table(DF7210_1),
-  df7210_2 = as.data.table(DF7210_2),
-  df7210_3 = as.data.table(DF7210_3),
-  
-  # 7310
-  df7310 = as.data.table(DF7310),
-  df7310_3 = as.data.table(DF7310_3),
-  df7310.1 = as.data.table(DF7310.1),
-  df7310.1_2 = as.data.table(DF7310.1_2),
-  df7310.2 = as.data.table(DF7310.2),
-  df7310.2_2 = as.data.table(DF7310.2_2),
-  
-  # 7320
-  df7320 = as.data.table(DF7320),
-  df7320_3 = as.data.table(DF7320_3),
-  df7320.1 = as.data.table(DF7320.1),
-  df7320.1_2 = as.data.table(DF7320.1_2),
-  df7320.2 = as.data.table(DF7320.2),
-  df7320.2_2 = as.data.table(DF7320.2_2),
-  
-  # 7330
-  df7330 = as.data.table(DF7330),
-  df7330_3 = as.data.table(DF7330_3),
-  df7331 = as.data.table(DF7331),
-  df7331_2 = as.data.table(DF7331_2),
-  df7331_3 = as.data.table(DF7331_3),
-  df7331.1 = as.data.table(DF7331.1),
-  df7331.1_2 = as.data.table(DF7331.1_2),
-  df7331.2 = as.data.table(DF7331.2),
-  df7331.2_2 = as.data.table(DF7331.2_2),
-  df7332 = as.data.table(DF7332),
-  df7332_2 = as.data.table(DF7332_2),
-  
-  # 7340
-  df7340 = as.data.table(DF7340),
-  df7340_3 = as.data.table(DF7340_3),
-  df7340.1 = as.data.table(DF7340.1),
-  df7340.1_2 = as.data.table(DF7340.1_2),
-  df7340.2 = as.data.table(DF7340.2),
-  df7340.2_2 = as.data.table(DF7340.2_2),
-  
-  # 7350
-  df7350 = as.data.table(DF7350),
-  df7350_3 = as.data.table(DF7350_3),
-  df7350.1 = as.data.table(DF7350.1),
-  df7350.1_2 = as.data.table(DF7350.1_2),
-  df7350.2 = as.data.table(DF7350.2),
-  df7350.2_2 = as.data.table(DF7350.2_2)
-)
+  data <- reactiveValues()
+
+  observe({
+    data$df7010_1 <- as.data.table(DF7010_1)
+    data$df7010_2 <- as.data.table(DF7010_2)
+    data$df7010_3 <- as.data.table(DF7010_3)
+
+    data$df7110_1 <- as.data.table(DF7110_1)
+    data$df7110_2 <- as.data.table(DF7110_2)
+    data$df7110_3 <- as.data.table(DF7110_3)
+
+    data$df7210_1 <- as.data.table(DF7210_1)
+    data$df7210_2 <- as.data.table(DF7210_2)
+    data$df7210_3 <- as.data.table(DF7210_3)
+
+    data$df7310 <- as.data.table(DF7310)
+    data$df7310.1 <- as.data.table(DF7310.1)
+    data$df7310.2 <- as.data.table(DF7310.2)
+    data$df7320 <- as.data.table(DF7320)
+    data$df7320.1 <- as.data.table(DF7320.1)
+    data$df7320.2 <- as.data.table(DF7320.2)
+    data$df7330 <- as.data.table(DF7330)
+    data$df7331 <- as.data.table(DF7331)
+    data$df7331.1 <- as.data.table(DF7331.1)
+    data$df7331.2 <- as.data.table(DF7331.2)
+    data$df7332 <- as.data.table(DF7332)
+    data$df7340 <- as.data.table(DF7340)
+    data$df7340.1 <- as.data.table(DF7340.1)
+    data$df7340.2 <- as.data.table(DF7340.2)
+    data$df7350 <- as.data.table(DF7350)
+    data$df7350.1 <- as.data.table(DF7350.1)
+    data$df7350.2 <- as.data.table(DF7350.2)
+
+    data$df7310_3 <- as.data.table(DF7310_3)
+    data$df7310.1_2 <- as.data.table(DF7310.1_2)
+    data$df7310.2_2 <- as.data.table(DF7310.2_2)
+    data$df7320_3 <- as.data.table(DF7320_3)
+    data$df7320.1_2 <- as.data.table(DF7320.1_2)
+    data$df7320.2_2 <- as.data.table(DF7320.2_2)
+    data$df7330_3 <- as.data.table(DF7330_3)
+    data$df7331_2 <- as.data.table(DF7331_2)
+    data$df7331_3 <- as.data.table(DF7331_3)
+    data$df7331.1_2 <- as.data.table(DF7331.1_2)
+    data$df7331.2_2 <- as.data.table(DF7331.2_2)
+    data$df7332_2 <- as.data.table(DF7332_2)
+    data$df7340_3 <- as.data.table(DF7340_3)
+    data$df7340.1_2 <- as.data.table(DF7340.1_2)
+    data$df7340.2_2 <- as.data.table(DF7340.2_2)
+    data$df7350_3 <- as.data.table(DF7350_3)
+    data$df7350.1_2 <- as.data.table(DF7350.1_2)
+    data$df7350.2_2 <- as.data.table(DF7350.2_2)
+    )}
   
   output$show_loading <- reactive({
     r$show_loading
