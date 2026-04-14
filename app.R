@@ -1,3 +1,4 @@
+
 library(shiny)
 library(shinydashboard)
 library(rhandsontable)
@@ -7411,7 +7412,7 @@ server <- function(input, output, session) {
     data$df7350_3 <- as.data.table(DF7350_3)
     data$df7350.1_2 <- as.data.table(DF7350.1_2)
     data$df7350.2_2 <- as.data.table(DF7350.2_2)
-    )}
+    })
   
   output$show_loading <- reactive({
     r$show_loading
