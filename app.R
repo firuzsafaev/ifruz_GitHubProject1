@@ -5000,12 +5000,12 @@ server <- function(input, output, session) {
 	    setnames(temp_data, expected_cols,
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
-	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
+	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь")) 
+          
+          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
+          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
+          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
+          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
 	    
 	    data$df7010_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7010_1 с ", nrow(temp_data), " rows")
