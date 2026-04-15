@@ -3809,11 +3809,6 @@ server <- function(input, output, session) {
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
 	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-
 	    data$df7010_1 <- temp_data
 	  } else {
 	    data$df7010_1 <- copy(DF7010_1)
@@ -3834,11 +3829,6 @@ server <- function(input, output, session) {
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
 	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
 	    data$df7110_1 <- temp_data
 	  } else {
 	    data$df7110_1 <- copy(DF7110_1)
@@ -3858,12 +3848,7 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+	       
 	    data$df7210_1 <- temp_data
 	  } else {
 	    data$df7210_1 <- copy(DF7210_1)
@@ -3886,11 +3871,7 @@ server <- function(input, output, session) {
                      "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
                      "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
           
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
+         
           data$df7310.1 <- temp_data
         } else {
           data$df7310.1 <- copy(DF7310.1)
@@ -3912,12 +3893,7 @@ server <- function(input, output, session) {
                      "Счет № статьи расхода", "Период расхода",
                      "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
                      "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
+                  
           data$df7310.2 <- temp_data
         } else {
           data$df7310.2 <- copy(DF7310.2)
@@ -4031,11 +4007,7 @@ server <- function(input, output, session) {
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь")) 
           
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+   
 	    data$df7010_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7010_1 с ", nrow(temp_data), " rows")
 	  } else {
@@ -4061,12 +4033,7 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+	        
 	    data$df7110_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7110_1 с ", nrow(temp_data), " rows")
 	  } else {
@@ -4092,12 +4059,7 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+	       
 	    data$df7210_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7210_1 с ", nrow(temp_data), " rows")
 	  } else {
@@ -4126,11 +4088,6 @@ server <- function(input, output, session) {
                      "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
                      "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
           
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-          
           data$df7310.1 <- temp_data
           message("ОТЛАДКА: успешно обновлен df7310.1 с ", nrow(temp_data), " rows")
         } else {
@@ -4158,11 +4115,6 @@ server <- function(input, output, session) {
                      "Счет № статьи расхода", "Период расхода",
                      "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
                      "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-          
-          if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-          if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-          if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-          if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
           
           data$df7310.2 <- temp_data
           message("ОТЛАДКА: успешно обновлен df7310.2 с ", nrow(temp_data), " rows")
