@@ -4934,7 +4934,7 @@ server <- function(input, output, session) {
     
 	    current_session <- session_id()
 	    
-    tryC	atch({
+	    tryCatch({
 	      update_info <- get_last_update(current_session)
 	      
 	      if (!is.null(update_info) && !is.null(r$current_session_last_update)) {
