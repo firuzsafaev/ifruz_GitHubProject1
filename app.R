@@ -6227,562 +6227,561 @@ server <- function(input, output, session) {
 	            }
 	        }
 	    })
+#*********
 
-      #*********
-      
-      #ОСВ: 7000
-      
-      observeEvent(input$dates7000, {
-          start <- ymd(input$dates7000[[1]])
-          end <- ymd(input$dates7000[[2]])
-      
-       tryCatch({  
-        if (start > end) {
-          shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
-          updateDateRangeInput(
-            session, 
-            "dates7000", 
-              start = r$start,
-              end = r$end
-            )
-          } else {
-            r$start <- input$dates7000[[1]]
-            r$end <- input$dates7000[[2]]
-          }
-         }, error = function(e) {
-            updateDateRangeInput(session,
-                                 "dates7000",
-                                 start = ymd(Sys.Date()),
-                                 end = ymd(Sys.Date()))
-            shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
-                       type = "error")
-          })
-      }, ignoreInit = TRUE)
-      
-      observe({
-          if (!any(is.na(input$dates7000))) {
-            from=as.Date(input$dates7000[1L])
-            to=as.Date(input$dates7000[2L])
-            if (from>to) to = from
-            selectdates7000_1 <- seq.Date(from=from,
-                                     to=to, by = "day")
-           data$df7010_4 <- data$df7010_1[as.Date(data$df7010_1$`Дата операции`) %in% selectdates7000_1, ]
-          } else {
-            selectdates7000_2 <- unique(as.Date(data$df7010_1$`Дата операции`))
-            data$df7010_4 <- data$df7010_1[data$df7010_1$`Дата операции` %in% selectdates7000_2, ]
-          }
-        })
-      
-        observe({
-          if(!is.null(input$table7010Item1) && !any(is.na(input$table7010Item1)))
-            data$df7010_4 <- hot_to_r(input$table7010Item1)
-        })
-      
-      observe({
-         if (nrow(data$df7010_4) > 0) {
-        data$df7010_3[1, 2:5] <- data$df7010_4[, list(
-          `Сальдо начальное` = sum(`Сальдо начальное`[1L], na.rm = TRUE),
-          Кредит = sum(`Кредит`, na.rm = TRUE),
-          Дебет = sum(`Дебет`, na.rm = TRUE),
-          `Сальдо конечное` = sum(`Сальдо конечное`[.N], na.rm = TRUE)
-        ), by="Учетный номер"][, .(
-          `Сальдо начальное` = sum(`Сальдо начальное`),
-          Дебет = sum(Дебет),
-          Кредит = sum(Кредит),
-          `Сальдо конечное` = sum(`Сальдо конечное`)
-        )]
-        } else {
-          data$df7010_3[1, 2:5] <- 0
-        }
-      })
-      
-        output$nested_ui7000 <- renderUI({!any(is.na(input$dates7000))})
-      
-        output$table7010Item3 <- renderRHandsontable({
-          rhandsontable(data$df7010_3, colWidths = 150, height = 70, readOnly=TRUE, contextMenu = FALSE,
-      		fixedColumnsLeft = 1, manualColumnResize = TRUE, dragColumns = FALSE) |>
-      	hot_col(1, width = 450)
-        })
-      
-        output$download_df7010_3 <- downloadHandler(
-          filename = function() { "df7010_3.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7010_3, file)
-        })
-      
-      #**********
-      
-      #7010
-      
-      observeEvent(input$dates7010, {
-          start <- ymd(input$dates7010[[1]])
-          end <- ymd(input$dates7010[[2]])
-      
-       tryCatch({  
-        if (start > end) {
-          shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
-          updateDateRangeInput(
-            session, 
-            "dates7010", 
-              start = r$start,
-              end = r$end
-            )
-          } else {
-            r$start <- input$dates7010[[1]]
-            r$end <- input$dates7010[[2]]
-          }
-         }, error = function(e) {
-            updateDateRangeInput(session,
-                                 "dates7010",
-                                 start = ymd(Sys.Date()),
-                                 end = ymd(Sys.Date()))
-            shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
-                       type = "error")
-          })
-      }, ignoreInit = TRUE)
-      
-        observe({ 
-          if (!is.null(input$table7010Item1)) {
-            if (!r$user_authenticated) {
-              update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
-              return()
-            }
-            
-            data$df7010_1 <- hot_to_r(input$table7010Item1)
-      
-          if (!any(is.na(input$dates7010)) && input$choices7010 == "Выбор по дате операции") {
-           	from=as.Date(input$dates7010[1L])
-            	to=as.Date(input$dates7010[2L])
-            	if (from>to) to = from
-            	selectdates7010_1 <- seq.Date(from=from, to=to, by = "day")
-            	data$df7010_2 <- data$df7010_1[as.Date(data$df7010_1$"Дата операции") %in% selectdates7010_1, ]
-          } else if (!is.null(input$text) && input$choices7010 == "Выбор по учетному номеру") {
-            	data$df7010_2 <- data$df7010_1[data$df7010_1$"Учетный номер" == input$text, ]
-          } else if (!is.null(input$dates7010) && !any(is.na(input$dates7010)) && !is.null(input$text) && input$choices7010 == "Выбор по дате операции и учетному номеру") {
-           	from=as.Date(input$dates7010[1L])
-            	to=as.Date(input$dates7010[2L])
-            	if (from>to) to = from
-            	selectdates7010_2 <- seq.Date(from=from, to=to, by = "day")
-            	data$df7010_2 <- data$df7010_1[as.Date(data$df7010_1$"Дата операции") %in% selectdates7010_2 & data$df7010_1$"Учетный номер" == input$text, ]
-          } else {
-              selectdates7010_4 <- unique(data$df7010_1$"Дата операции")
-              data$df7010_2 <- data$df7010_1[data$df7010_1$"Дата операции" %in% selectdates7010_4, ]
-          }
+#ОСВ: 7000
+
+observeEvent(input$dates7000, {
+    start <- ymd(input$dates7000[[1]])
+    end <- ymd(input$dates7000[[2]])
+
+ tryCatch({  
+  if (start > end) {
+    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+    updateDateRangeInput(
+      session, 
+      "dates7000", 
+        start = r$start,
+        end = r$end
+      )
+    } else {
+      r$start <- input$dates7000[[1]]
+      r$end <- input$dates7000[[2]]
+    }
+   }, error = function(e) {
+      updateDateRangeInput(session,
+                           "dates7000",
+                           start = ymd(Sys.Date()),
+                           end = ymd(Sys.Date()))
+      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+                 type = "error")
+    })
+}, ignoreInit = TRUE)
+
+observe({
+    if (!any(is.na(input$dates7000))) {
+      from=as.Date(input$dates7000[1L])
+      to=as.Date(input$dates7000[2L])
+      if (from>to) to = from
+      selectdates7000_1 <- seq.Date(from=from,
+                               to=to, by = "day")
+     data$df7010_4 <- data$df7010_1[as.Date(data$df7010_1$`Дата операции`) %in% selectdates7000_1, ]
+    } else {
+      selectdates7000_2 <- unique(as.Date(data$df7010_1$`Дата операции`))
+      data$df7010_4 <- data$df7010_1[data$df7010_1$`Дата операции` %in% selectdates7000_2, ]
+    }
+  })
+
+  observe({
+    if(!is.null(input$table7010Item1) && !any(is.na(input$table7010Item1)))
+      data$df7010_4 <- hot_to_r(input$table7010Item1)
+  })
+
+observe({
+   if (nrow(data$df7010_4) > 0) {
+  data$df7010_3[1, 2:5] <- data$df7010_4[, list(
+    `Сальдо начальное` = sum(`Сальдо начальное`[1L], na.rm = TRUE),
+    Кредит = sum(`Кредит`, na.rm = TRUE),
+    Дебет = sum(`Дебет`, na.rm = TRUE),
+    `Сальдо конечное` = sum(`Сальдо конечное`[.N], na.rm = TRUE)
+  ), by="Учетный номер"][, .(
+    `Сальдо начальное` = sum(`Сальдо начальное`),
+    Дебет = sum(Дебет),
+    Кредит = sum(Кредит),
+    `Сальдо конечное` = sum(`Сальдо конечное`)
+  )]
+  } else {
+    data$df7010_3[1, 2:5] <- 0
+  }
+})
+
+  output$nested_ui7000 <- renderUI({!any(is.na(input$dates7000))})
+
+  output$table7010Item3 <- renderRHandsontable({
+    rhandsontable(data$df7010_3, colWidths = 150, height = 70, readOnly=TRUE, contextMenu = FALSE,
+		fixedColumnsLeft = 1, manualColumnResize = TRUE, dragColumns = FALSE) |>
+	hot_col(1, width = 450)
+  })
+
+  output$download_df7010_3 <- downloadHandler(
+    filename = function() { "df7010_3.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7010_3, file)
+  })
+
+#**********
+
+#7010
+
+observeEvent(input$dates7010, {
+    start <- ymd(input$dates7010[[1]])
+    end <- ymd(input$dates7010[[2]])
+
+ tryCatch({  
+  if (start > end) {
+    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+    updateDateRangeInput(
+      session, 
+      "dates7010", 
+        start = r$start,
+        end = r$end
+      )
+    } else {
+      r$start <- input$dates7010[[1]]
+      r$end <- input$dates7010[[2]]
+    }
+   }, error = function(e) {
+      updateDateRangeInput(session,
+                           "dates7010",
+                           start = ymd(Sys.Date()),
+                           end = ymd(Sys.Date()))
+      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+                 type = "error")
+    })
+}, ignoreInit = TRUE)
+
+  observe({ 
+    if (!is.null(input$table7010Item1)) {
+      if (!r$user_authenticated) {
+        update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
+        return()
       }
-      })  
       
-        output$table7010Item1 <- renderRHandsontable({
-      
-          data$df7010_1[, `Сальдо конечное` := data$df7010_1[[6]] + data$df7010_1[[7]] - data$df7010_1[[8]]]
-      
-          rhandsontable(data$df7010_1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2,
-      		manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
-            hot_col(1, dateFormat = "YYYY-MM-DD", type = "date") |>
-            hot_col("Пользователь", readOnly = TRUE)
-        })
-      
-        output$nested_ui7010 <- renderUI({
-          if (input$choices7010 == "Выбор по дате операции") {
-            	dateRangeInput("dates7010", "Выберите период времени:",
-                           start = Sys.Date(), end = Sys.Date(), separator = "-")
-          } else if (input$choices7010 == "Выбор по учетному номеру") {
-            	textInput("text", "Укажите учетный номер:")
-          } else if (input$choices7010 == "Выбор по дате операции и учетному номеру") {
-            fluidRow(
-             	dateRangeInput("dates7010", "Выберите период времени:",
-                             start = Sys.Date(), end = Sys.Date(), separator = "-"),
-              textInput("text", "Укажите учетный номер:")
-            )
-          }
-        })
-      
-        output$table7010Item2 <- renderRHandsontable({
-      
-          rhandsontable(data$df7010_2, colWidths = 150, height = 500, readOnly=TRUE, 
-      		contextMenu = FALSE, manualColumnResize = TRUE, dragColumns = FALSE) |>
-            hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
-        })
-      
-        output$download_df7010 <- downloadHandler(
-          filename = function() { "df7010.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7010, file)
-        })
-      
-        output$download_df7010_2 <- downloadHandler(
-          filename = function() { "df7010_2.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7010_2, file)
-        })
-      
-      #********
-      
-      #ОСВ: 7100
-      
-      observeEvent(input$dates7100, {
-          start <- ymd(input$dates7100[[1]])
-          end <- ymd(input$dates7100[[2]])
-      
-       tryCatch({  
-        if (start > end) {
-          shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
-          updateDateRangeInput(
-            session, 
-            "dates7100", 
-              start = r$start,
-              end = r$end
-            )
-          } else {
-            r$start <- input$dates7100[[1]]
-            r$end <- input$dates7100[[2]]
-          }
-         }, error = function(e) {
-            updateDateRangeInput(session,
-                                 "dates7100",
-                                 start = ymd(Sys.Date()),
-                                 end = ymd(Sys.Date()))
-            shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
-                       type = "error")
-          })
-      }, ignoreInit = TRUE)
-      
-      observe({
-          if (!any(is.na(input$dates7100))) {
-            from=as.Date(input$dates7100[1L])
-            to=as.Date(input$dates7100[2L])
-            if (from>to) to = from
-            selectdates7100_1 <- seq.Date(from=from,
-                                     to=to, by = "day")
-           data$df7110_4 <- data$df7110_1[as.Date(data$df7110_1$`Дата операции`) %in% selectdates7100_1, ]
-          } else {
-            selectdates7100_2 <- unique(as.Date(data$df7110_1$`Дата операции`))
-            data$df7110_4 <- data$df7110_1[data$df7110_1$`Дата операции` %in% selectdates7100_2, ]
-          }
-        })
-      
-        observe({
-          if(!is.null(input$table7110Item1) && !any(is.na(input$table7110Item1)))
-            data$df7110_4 <- hot_to_r(input$table7110Item1)
-        })
-      
-      observe({
-         if (nrow(data$df7110_4) > 0) {
-        data$df7110_3[1, 2:5] <- data$df7110_4[, list(
-          `Сальдо начальное` = sum(`Сальдо начальное`[1L], na.rm = TRUE),
-          Кредит = sum(`Кредит`, na.rm = TRUE),
-          Дебет = sum(`Дебет`, na.rm = TRUE),
-          `Сальдо конечное` = sum(`Сальдо конечное`[.N], na.rm = TRUE)
-        ), by="Учетный номер"][, .(
-          `Сальдо начальное` = sum(`Сальдо начальное`),
-          Дебет = sum(Дебет),
-          Кредит = sum(Кредит),
-          `Сальдо конечное` = sum(`Сальдо конечное`)
-        )]
-        } else {
-          data$df7110_3[1, 2:5] <- 0
-        }
-      })
-      
-        output$nested_ui7100 <- renderUI({!any(is.na(input$dates7100))})
-      
-        output$table7110Item3 <- renderRHandsontable({
-          rhandsontable(data$df7110_3, colWidths = 150, height = 70, readOnly=TRUE, contextMenu = FALSE, 
-      		fixedColumnsLeft = 1, manualColumnResize = TRUE, dragColumns = FALSE) |>
-      	hot_col(1, width = 450)
-        })
-      
-        output$download_df7110_3 <- downloadHandler(
-          filename = function() { "df7110_3.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7110_3, file)
-        })
-      
-      #*******
-      
-      #7110
-      
-      observeEvent(input$dates7110, {
-          start <- ymd(input$dates7110[[1]])
-          end <- ymd(input$dates7110[[2]])
-      
-       tryCatch({  
-        if (start > end) {
-          shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
-          updateDateRangeInput(
-            session, 
-            "dates7110", 
-              start = r$start,
-              end = r$end
-            )
-          } else {
-            r$start <- input$dates7110[[1]]
-            r$end <- input$dates7110[[2]]
-          }
-         }, error = function(e) {
-            updateDateRangeInput(session,
-                                 "dates7110",
-                                 start = ymd(Sys.Date()),
-                                 end = ymd(Sys.Date()))
-            shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
-                       type = "error")
-          })
-      }, ignoreInit = TRUE)
-      
-        observe({ 
-          if (!is.null(input$table7110Item1)) {
-            if (!r$user_authenticated) {
-              update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
-              return()
-            }
-            
-            data$df7110_1 <- hot_to_r(input$table7110Item1)
-      
-          if (!any(is.na(input$dates7110)) && input$choices7110 == "Выбор по дате операции") {
-           	from=as.Date(input$dates7110[1L])
-            	to=as.Date(input$dates7110[2L])
-            	if (from>to) to = from
-            	selectdates7110_1 <- seq.Date(from=from, to=to, by = "day")
-            	data$df7110_2 <- data$df7110_1[as.Date(data$df7110_1$"Дата операции") %in% selectdates7110_1, ]
-          } else if (!is.null(input$text) && input$choices7110 == "Выбор по учетному номеру") {
-            	data$df7110_2 <- data$df7110_1[data$df7110_1$"Учетный номер" == input$text, ]
-          } else if (!is.null(input$dates7110) && !any(is.na(input$dates7110)) && !is.null(input$text) && input$choices7110 == "Выбор по дате операции и учетному номеру") {
-           	from=as.Date(input$dates7110[1L])
-            	to=as.Date(input$dates7110[2L])
-            	if (from>to) to = from
-            	selectdates7110_2 <- seq.Date(from=from, to=to, by = "day")
-            	data$df7110_2 <- data$df7110_1[as.Date(data$df7110_1$"Дата операции") %in% selectdates7110_2 & data$df7110_1$"Учетный номер" == input$text, ]
-          } else {
-              selectdates7110_4 <- unique(data$df7110_1$"Дата операции")
-              data$df7110_2 <- data$df7110_1[data$df7110_1$"Дата операции" %in% selectdates7110_4, ]
-          }
+      data$df7010_1 <- hot_to_r(input$table7010Item1)
+
+    if (!any(is.na(input$dates7010)) && input$choices7010 == "Выбор по дате операции") {
+     	from=as.Date(input$dates7010[1L])
+      	to=as.Date(input$dates7010[2L])
+      	if (from>to) to = from
+      	selectdates7010_1 <- seq.Date(from=from, to=to, by = "day")
+      	data$df7010_2 <- data$df7010_1[as.Date(data$df7010_1$"Дата операции") %in% selectdates7010_1, ]
+    } else if (!is.null(input$text) && input$choices7010 == "Выбор по учетному номеру") {
+      	data$df7010_2 <- data$df7010_1[data$df7010_1$"Учетный номер" == input$text, ]
+    } else if (!is.null(input$dates7010) && !any(is.na(input$dates7010)) && !is.null(input$text) && input$choices7010 == "Выбор по дате операции и учетному номеру") {
+     	from=as.Date(input$dates7010[1L])
+      	to=as.Date(input$dates7010[2L])
+      	if (from>to) to = from
+      	selectdates7010_2 <- seq.Date(from=from, to=to, by = "day")
+      	data$df7010_2 <- data$df7010_1[as.Date(data$df7010_1$"Дата операции") %in% selectdates7010_2 & data$df7010_1$"Учетный номер" == input$text, ]
+    } else {
+        selectdates7010_4 <- unique(data$df7010_1$"Дата операции")
+        data$df7010_2 <- data$df7010_1[data$df7010_1$"Дата операции" %in% selectdates7010_4, ]
+    }
+}
+})  
+
+  output$table7010Item1 <- renderRHandsontable({
+
+    data$df7010_1[, `Сальдо конечное` := data$df7010_1[[6]] + data$df7010_1[[7]] - data$df7010_1[[8]]]
+
+    rhandsontable(data$df7010_1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2,
+		manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
+      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date") |>
+      hot_col("Пользователь", readOnly = TRUE)
+  })
+
+  output$nested_ui7010 <- renderUI({
+    if (input$choices7010 == "Выбор по дате операции") {
+      	dateRangeInput("dates7010", "Выберите период времени:",
+                     start = Sys.Date(), end = Sys.Date(), separator = "-")
+    } else if (input$choices7010 == "Выбор по учетному номеру") {
+      	textInput("text", "Укажите учетный номер:")
+    } else if (input$choices7010 == "Выбор по дате операции и учетному номеру") {
+      fluidRow(
+       	dateRangeInput("dates7010", "Выберите период времени:",
+                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+        textInput("text", "Укажите учетный номер:")
+      )
+    }
+  })
+
+  output$table7010Item2 <- renderRHandsontable({
+
+    rhandsontable(data$df7010_2, colWidths = 150, height = 500, readOnly=TRUE, 
+		contextMenu = FALSE, manualColumnResize = TRUE, dragColumns = FALSE) |>
+      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+  })
+
+  output$download_df7010 <- downloadHandler(
+    filename = function() { "df7010.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7010, file)
+  })
+
+  output$download_df7010_2 <- downloadHandler(
+    filename = function() { "df7010_2.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7010_2, file)
+  })
+
+#********
+
+#ОСВ: 7100
+
+observeEvent(input$dates7100, {
+    start <- ymd(input$dates7100[[1]])
+    end <- ymd(input$dates7100[[2]])
+
+ tryCatch({  
+  if (start > end) {
+    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+    updateDateRangeInput(
+      session, 
+      "dates7100", 
+        start = r$start,
+        end = r$end
+      )
+    } else {
+      r$start <- input$dates7100[[1]]
+      r$end <- input$dates7100[[2]]
+    }
+   }, error = function(e) {
+      updateDateRangeInput(session,
+                           "dates7100",
+                           start = ymd(Sys.Date()),
+                           end = ymd(Sys.Date()))
+      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+                 type = "error")
+    })
+}, ignoreInit = TRUE)
+
+observe({
+    if (!any(is.na(input$dates7100))) {
+      from=as.Date(input$dates7100[1L])
+      to=as.Date(input$dates7100[2L])
+      if (from>to) to = from
+      selectdates7100_1 <- seq.Date(from=from,
+                               to=to, by = "day")
+     data$df7110_4 <- data$df7110_1[as.Date(data$df7110_1$`Дата операции`) %in% selectdates7100_1, ]
+    } else {
+      selectdates7100_2 <- unique(as.Date(data$df7110_1$`Дата операции`))
+      data$df7110_4 <- data$df7110_1[data$df7110_1$`Дата операции` %in% selectdates7100_2, ]
+    }
+  })
+
+  observe({
+    if(!is.null(input$table7110Item1) && !any(is.na(input$table7110Item1)))
+      data$df7110_4 <- hot_to_r(input$table7110Item1)
+  })
+
+observe({
+   if (nrow(data$df7110_4) > 0) {
+  data$df7110_3[1, 2:5] <- data$df7110_4[, list(
+    `Сальдо начальное` = sum(`Сальдо начальное`[1L], na.rm = TRUE),
+    Кредит = sum(`Кредит`, na.rm = TRUE),
+    Дебет = sum(`Дебет`, na.rm = TRUE),
+    `Сальдо конечное` = sum(`Сальдо конечное`[.N], na.rm = TRUE)
+  ), by="Учетный номер"][, .(
+    `Сальдо начальное` = sum(`Сальдо начальное`),
+    Дебет = sum(Дебет),
+    Кредит = sum(Кредит),
+    `Сальдо конечное` = sum(`Сальдо конечное`)
+  )]
+  } else {
+    data$df7110_3[1, 2:5] <- 0
+  }
+})
+
+  output$nested_ui7100 <- renderUI({!any(is.na(input$dates7100))})
+
+  output$table7110Item3 <- renderRHandsontable({
+    rhandsontable(data$df7110_3, colWidths = 150, height = 70, readOnly=TRUE, contextMenu = FALSE, 
+		fixedColumnsLeft = 1, manualColumnResize = TRUE, dragColumns = FALSE) |>
+	hot_col(1, width = 450)
+  })
+
+  output$download_df7110_3 <- downloadHandler(
+    filename = function() { "df7110_3.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7110_3, file)
+  })
+
+#*******
+
+#7110
+
+observeEvent(input$dates7110, {
+    start <- ymd(input$dates7110[[1]])
+    end <- ymd(input$dates7110[[2]])
+
+ tryCatch({  
+  if (start > end) {
+    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+    updateDateRangeInput(
+      session, 
+      "dates7110", 
+        start = r$start,
+        end = r$end
+      )
+    } else {
+      r$start <- input$dates7110[[1]]
+      r$end <- input$dates7110[[2]]
+    }
+   }, error = function(e) {
+      updateDateRangeInput(session,
+                           "dates7110",
+                           start = ymd(Sys.Date()),
+                           end = ymd(Sys.Date()))
+      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+                 type = "error")
+    })
+}, ignoreInit = TRUE)
+
+  observe({ 
+    if (!is.null(input$table7110Item1)) {
+      if (!r$user_authenticated) {
+        update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
+        return()
       }
-      })  
       
-        output$table7110Item1 <- renderRHandsontable({
-      
-          data$df7110_1[, `Сальдо конечное` := data$df7110_1[[6]] + data$df7110_1[[7]] - data$df7110_1[[8]]]
-      
-          rhandsontable(data$df7110_1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
-      		manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
-            hot_col(1, dateFormat = "YYYY-MM-DD", type = "date") |>
-            hot_col("Пользователь", readOnly = TRUE)
-        })
-      
-        output$nested_ui7110 <- renderUI({
-          if (input$choices7110 == "Выбор по дате операции") {
-            	dateRangeInput("dates7110", "Выберите период времени:",
-                           start = Sys.Date(), end = Sys.Date(), separator = "-")
-          } else if (input$choices7110 == "Выбор по учетному номеру") {
-            	textInput("text", "Укажите учетный номер:")
-          } else if (input$choices7110 == "Выбор по дате операции и учетному номеру") {
-            fluidRow(
-             	dateRangeInput("dates7110", "Выберите период времени:",
-                             start = Sys.Date(), end = Sys.Date(), separator = "-"),
-              textInput("text", "Укажите учетный номер:")
-            )
-          }
-        })
-      
-        output$table7110Item2 <- renderRHandsontable({
-      
-          rhandsontable(data$df7110_2, colWidths = 150, height = 500, readOnly=TRUE, 
-      		contextMenu = FALSE, manualColumnResize = TRUE, dragColumns = FALSE) |>
-            hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
-        })
-      
-        output$download_df7110_1 <- downloadHandler(
-          filename = function() { "df7110_1.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7110_1, file)
-        })
-      
-        output$download_df7110_2 <- downloadHandler(
-          filename = function() { "df7110_2.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7110_2, file)
-        })
-      
-      #*********
-      
-      #ОСВ: 7200
-      
-      observeEvent(input$dates7200, {
-          start <- ymd(input$dates7200[[1]])
-          end <- ymd(input$dates7200[[2]])
-      
-       tryCatch({  
-        if (start > end) {
-          shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
-          updateDateRangeInput(
-            session, 
-            "dates7200", 
-              start = r$start,
-              end = r$end
-            )
-          } else {
-            r$start <- input$dates7200[[1]]
-            r$end <- input$dates7200[[2]]
-          }
-         }, error = function(e) {
-            updateDateRangeInput(session,
-                                 "dates7200",
-                                 start = ymd(Sys.Date()),
-                                 end = ymd(Sys.Date()))
-            shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
-                       type = "error")
-          })
-      }, ignoreInit = TRUE)
-      
-      observe({
-          if (!any(is.na(input$dates7200))) {
-            from=as.Date(input$dates7200[1L])
-            to=as.Date(input$dates7200[2L])
-            if (from>to) to = from
-            selectdates7200_1 <- seq.Date(from=from,
-                                     to=to, by = "day")
-           data$df7210_4 <- data$df7210_1[as.Date(data$df7210_1$`Дата операции`) %in% selectdates7200_1, ]
-          } else {
-            selectdates7200_2 <- unique(as.Date(data$df7210_1$`Дата операции`))
-            data$df7210_4 <- data$df7210_1[data$df7210_1$`Дата операции` %in% selectdates7200_2, ]
-          }
-        })
-      
-        observe({
-          if(!is.null(input$table7210Item1) && !any(is.na(input$table7210Item1)))
-            data$df7210_4 <- hot_to_r(input$table7210Item1)
-        })
-      
-      observe({
-         if (nrow(data$df7210_4) > 0) {
-        data$df7210_3[1, 2:5] <- data$df7210_4[, list(
-          `Сальдо начальное` = sum(`Сальдо начальное`[1L], na.rm = TRUE),
-          Кредит = sum(`Кредит`, na.rm = TRUE),
-          Дебет = sum(`Дебет`, na.rm = TRUE),
-          `Сальдо конечное` = sum(`Сальдо конечное`[.N], na.rm = TRUE)
-        ), by="Учетный номер"][, .(
-          `Сальдо начальное` = sum(`Сальдо начальное`),
-          Дебет = sum(Дебет),
-          Кредит = sum(Кредит),
-          `Сальдо конечное` = sum(`Сальдо конечное`)
-        )]
-        } else {
-          data$df7210_3[1, 2:5] <- 0
-        }
-      })
-      
-        output$nested_ui7200 <- renderUI({!any(is.na(input$dates7200))})
-      
-        output$table7210Item3 <- renderRHandsontable({
-          rhandsontable(data$df7210_3, colWidths = 150, height = 70, readOnly=TRUE, contextMenu = FALSE, 
-      		fixedColumnsLeft = 1, manualColumnResize = TRUE, dragColumns = FALSE) |>
-      	hot_col(1, width = 300)
-        })
-      
-        output$download_df7210_3 <- downloadHandler(
-          filename = function() { "df7210_3.xlsx" },
-          content = function(file) {
-            write.xlsx(data$df7210_3, file)
-        })
-      
-      #*********
-      
-      #7210
-      
-      observeEvent(input$dates7210, {
-          start <- ymd(input$dates7210[[1]])
-          end <- ymd(input$dates7210[[2]])
-      
-       tryCatch({  
-        if (start > end) {
-          shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
-          updateDateRangeInput(
-            session, 
-            "dates7210", 
-              start = r$start,
-              end = r$end
-            )
-          } else {
-            r$start <- input$dates7210[[1]]
-            r$end <- input$dates7210[[2]]
-          }
-         }, error = function(e) {
-            updateDateRangeInput(session,
-                                 "dates7210",
-                                 start = ymd(Sys.Date()),
-                                 end = ymd(Sys.Date()))
-            shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
-                       type = "error")
-          })
-      }, ignoreInit = TRUE)
-      
-        observe({ 
-          if (!is.null(input$table7210Item1)) {
-            if (!r$user_authenticated) {
-              update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
-              return()
-            }
-            
-            data$df7210_1 <- hot_to_r(input$table7210Item1)
-      
-          if (!any(is.na(input$dates7210)) && input$choices7210 == "Выбор по дате операции") {
-           	from=as.Date(input$dates7210[1L])
-            	to=as.Date(input$dates7210[2L])
-            	if (from>to) to = from
-            	selectdates7210_1 <- seq.Date(from=from, to=to, by = "day")
-            	data$df7210_2 <- data$df7210_1[as.Date(data$df7210_1$"Дата операции") %in% selectdates7210_1, ]
-          } else if (!is.null(input$text) && input$choices7210 == "Выбор по учетному номеру") {
-            	data$df7210_2 <- data$df7210_1[data$df7210_1$"Учетный номер" == input$text, ]
-          } else if (!is.null(input$dates7210) && !any(is.na(input$dates7210)) && !is.null(input$text) && input$choices7210 == "Выбор по дате операции и учетному номеру") {
-           	from=as.Date(input$dates7210[1L])
-            	to=as.Date(input$dates7210[2L])
-            	if (from>to) to = from
-            	selectdates7210_2 <- seq.Date(from=from, to=to, by = "day")
-            	data$df7210_2 <- data$df7210_1[as.Date(data$df7210_1$"Дата операции") %in% selectdates7210_2 & data$df7210_1$"Учетный номер" == input$text, ]
-          } else {
-              selectdates7210_4 <- unique(data$df7210_1$"Дата операции")
-              data$df7210_2 <- data$df7210_1[data$df7210_1$"Дата операции" %in% selectdates7210_4, ]
-          }
+      data$df7110_1 <- hot_to_r(input$table7110Item1)
+
+    if (!any(is.na(input$dates7110)) && input$choices7110 == "Выбор по дате операции") {
+     	from=as.Date(input$dates7110[1L])
+      	to=as.Date(input$dates7110[2L])
+      	if (from>to) to = from
+      	selectdates7110_1 <- seq.Date(from=from, to=to, by = "day")
+      	data$df7110_2 <- data$df7110_1[as.Date(data$df7110_1$"Дата операции") %in% selectdates7110_1, ]
+    } else if (!is.null(input$text) && input$choices7110 == "Выбор по учетному номеру") {
+      	data$df7110_2 <- data$df7110_1[data$df7110_1$"Учетный номер" == input$text, ]
+    } else if (!is.null(input$dates7110) && !any(is.na(input$dates7110)) && !is.null(input$text) && input$choices7110 == "Выбор по дате операции и учетному номеру") {
+     	from=as.Date(input$dates7110[1L])
+      	to=as.Date(input$dates7110[2L])
+      	if (from>to) to = from
+      	selectdates7110_2 <- seq.Date(from=from, to=to, by = "day")
+      	data$df7110_2 <- data$df7110_1[as.Date(data$df7110_1$"Дата операции") %in% selectdates7110_2 & data$df7110_1$"Учетный номер" == input$text, ]
+    } else {
+        selectdates7110_4 <- unique(data$df7110_1$"Дата операции")
+        data$df7110_2 <- data$df7110_1[data$df7110_1$"Дата операции" %in% selectdates7110_4, ]
+    }
+}
+})  
+
+  output$table7110Item1 <- renderRHandsontable({
+
+    data$df7110_1[, `Сальдо конечное` := data$df7110_1[[6]] + data$df7110_1[[7]] - data$df7110_1[[8]]]
+
+    rhandsontable(data$df7110_1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
+		manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
+      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date") |>
+      hot_col("Пользователь", readOnly = TRUE)
+  })
+
+  output$nested_ui7110 <- renderUI({
+    if (input$choices7110 == "Выбор по дате операции") {
+      	dateRangeInput("dates7110", "Выберите период времени:",
+                     start = Sys.Date(), end = Sys.Date(), separator = "-")
+    } else if (input$choices7110 == "Выбор по учетному номеру") {
+      	textInput("text", "Укажите учетный номер:")
+    } else if (input$choices7110 == "Выбор по дате операции и учетному номеру") {
+      fluidRow(
+       	dateRangeInput("dates7110", "Выберите период времени:",
+                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+        textInput("text", "Укажите учетный номер:")
+      )
+    }
+  })
+
+  output$table7110Item2 <- renderRHandsontable({
+
+    rhandsontable(data$df7110_2, colWidths = 150, height = 500, readOnly=TRUE, 
+		contextMenu = FALSE, manualColumnResize = TRUE, dragColumns = FALSE) |>
+      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+  })
+
+  output$download_df7110_1 <- downloadHandler(
+    filename = function() { "df7110_1.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7110_1, file)
+  })
+
+  output$download_df7110_2 <- downloadHandler(
+    filename = function() { "df7110_2.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7110_2, file)
+  })
+
+#*********
+
+#ОСВ: 7200
+
+observeEvent(input$dates7200, {
+    start <- ymd(input$dates7200[[1]])
+    end <- ymd(input$dates7200[[2]])
+
+ tryCatch({  
+  if (start > end) {
+    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+    updateDateRangeInput(
+      session, 
+      "dates7200", 
+        start = r$start,
+        end = r$end
+      )
+    } else {
+      r$start <- input$dates7200[[1]]
+      r$end <- input$dates7200[[2]]
+    }
+   }, error = function(e) {
+      updateDateRangeInput(session,
+                           "dates7200",
+                           start = ymd(Sys.Date()),
+                           end = ymd(Sys.Date()))
+      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+                 type = "error")
+    })
+}, ignoreInit = TRUE)
+
+observe({
+    if (!any(is.na(input$dates7200))) {
+      from=as.Date(input$dates7200[1L])
+      to=as.Date(input$dates7200[2L])
+      if (from>to) to = from
+      selectdates7200_1 <- seq.Date(from=from,
+                               to=to, by = "day")
+     data$df7210_4 <- data$df7210_1[as.Date(data$df7210_1$`Дата операции`) %in% selectdates7200_1, ]
+    } else {
+      selectdates7200_2 <- unique(as.Date(data$df7210_1$`Дата операции`))
+      data$df7210_4 <- data$df7210_1[data$df7210_1$`Дата операции` %in% selectdates7200_2, ]
+    }
+  })
+
+  observe({
+    if(!is.null(input$table7210Item1) && !any(is.na(input$table7210Item1)))
+      data$df7210_4 <- hot_to_r(input$table7210Item1)
+  })
+
+observe({
+   if (nrow(data$df7210_4) > 0) {
+  data$df7210_3[1, 2:5] <- data$df7210_4[, list(
+    `Сальдо начальное` = sum(`Сальдо начальное`[1L], na.rm = TRUE),
+    Кредит = sum(`Кредит`, na.rm = TRUE),
+    Дебет = sum(`Дебет`, na.rm = TRUE),
+    `Сальдо конечное` = sum(`Сальдо конечное`[.N], na.rm = TRUE)
+  ), by="Учетный номер"][, .(
+    `Сальдо начальное` = sum(`Сальдо начальное`),
+    Дебет = sum(Дебет),
+    Кредит = sum(Кредит),
+    `Сальдо конечное` = sum(`Сальдо конечное`)
+  )]
+  } else {
+    data$df7210_3[1, 2:5] <- 0
+  }
+})
+
+  output$nested_ui7200 <- renderUI({!any(is.na(input$dates7200))})
+
+  output$table7210Item3 <- renderRHandsontable({
+    rhandsontable(data$df7210_3, colWidths = 150, height = 70, readOnly=TRUE, contextMenu = FALSE, 
+		fixedColumnsLeft = 1, manualColumnResize = TRUE, dragColumns = FALSE) |>
+	hot_col(1, width = 300)
+  })
+
+  output$download_df7210_3 <- downloadHandler(
+    filename = function() { "df7210_3.xlsx" },
+    content = function(file) {
+      write.xlsx(data$df7210_3, file)
+  })
+
+#*********
+
+#7210
+
+observeEvent(input$dates7210, {
+    start <- ymd(input$dates7210[[1]])
+    end <- ymd(input$dates7210[[2]])
+
+ tryCatch({  
+  if (start > end) {
+    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+    updateDateRangeInput(
+      session, 
+      "dates7210", 
+        start = r$start,
+        end = r$end
+      )
+    } else {
+      r$start <- input$dates7210[[1]]
+      r$end <- input$dates7210[[2]]
+    }
+   }, error = function(e) {
+      updateDateRangeInput(session,
+                           "dates7210",
+                           start = ymd(Sys.Date()),
+                           end = ymd(Sys.Date()))
+      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+                 type = "error")
+    })
+}, ignoreInit = TRUE)
+
+  observe({ 
+    if (!is.null(input$table7210Item1)) {
+      if (!r$user_authenticated) {
+        update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
+        return()
       }
-      })  
       
-        output$table7210Item1 <- renderRHandsontable({
-      
-          data$df7210_1[, `Сальдо конечное` := data$df7210_1[[6]] + data$df7210_1[[7]] - data$df7210_1[[8]]]
-      
-          rhandsontable(data$df7210_1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
-      		manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
-            hot_col(1, dateFormat = "YYYY-MM-DD", type = "date") |>
-            hot_col("Пользователь", readOnly = TRUE)
-        })
-      
-        output$nested_ui7210 <- renderUI({
-          if (input$choices7210 == "Выбор по дате операции") {
-            	dateRangeInput("dates7210", "Выберите период времени:",
-                           start = Sys.Date(), end = Sys.Date(), separator = "-")
-          } else if (input$choices7210 == "Выбор по учетному номеру") {
-            	textInput("text", "Укажите учетный номер:")
-          } else if (input$choices7210 == "Выбор по дате операции и учетному номеру") {
-            fluidRow(
-             	dateRangeInput("dates7210", "Выберите период времени:",
-                             start = Sys.Date(), end = Sys.Date(), separator = "-"),
-              textInput("text", "Укажите учетный номер:")
-            )}
-        })
-      
-        output$table7210Item2 <- renderRHandsontable({
-      
-          rhandsontable(data$df7210_2, colWidths = 150, height = 500, readOnly=TRUE, 
-      		contextMenu = FALSE, manualColumnResize = TRUE, dragColumns = FALSE) |>
-            hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
-        })
-      
-        output$download_df7210_1 <- downloadHandler(
-          filename = function() { "df7210_1.xlsx" },
-          content = function(file) { write.xlsx(data$df7210_1, file) })
-      
-        output$download_df7210_2 <- downloadHandler(
-          filename = function() { "df7210_2.xlsx" },
-          content = function(file) { write.xlsx(data$df7210_2, file) })
+      data$df7210_1 <- hot_to_r(input$table7210Item1)
+
+    if (!any(is.na(input$dates7210)) && input$choices7210 == "Выбор по дате операции") {
+     	from=as.Date(input$dates7210[1L])
+      	to=as.Date(input$dates7210[2L])
+      	if (from>to) to = from
+      	selectdates7210_1 <- seq.Date(from=from, to=to, by = "day")
+      	data$df7210_2 <- data$df7210_1[as.Date(data$df7210_1$"Дата операции") %in% selectdates7210_1, ]
+    } else if (!is.null(input$text) && input$choices7210 == "Выбор по учетному номеру") {
+      	data$df7210_2 <- data$df7210_1[data$df7210_1$"Учетный номер" == input$text, ]
+    } else if (!is.null(input$dates7210) && !any(is.na(input$dates7210)) && !is.null(input$text) && input$choices7210 == "Выбор по дате операции и учетному номеру") {
+     	from=as.Date(input$dates7210[1L])
+      	to=as.Date(input$dates7210[2L])
+      	if (from>to) to = from
+      	selectdates7210_2 <- seq.Date(from=from, to=to, by = "day")
+      	data$df7210_2 <- data$df7210_1[as.Date(data$df7210_1$"Дата операции") %in% selectdates7210_2 & data$df7210_1$"Учетный номер" == input$text, ]
+    } else {
+        selectdates7210_4 <- unique(data$df7210_1$"Дата операции")
+        data$df7210_2 <- data$df7210_1[data$df7210_1$"Дата операции" %in% selectdates7210_4, ]
+    }
+}
+})  
+
+  output$table7210Item1 <- renderRHandsontable({
+
+    data$df7210_1[, `Сальдо конечное` := data$df7210_1[[6]] + data$df7210_1[[7]] - data$df7210_1[[8]]]
+
+    rhandsontable(data$df7210_1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
+		manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
+      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date") |>
+      hot_col("Пользователь", readOnly = TRUE)
+  })
+
+  output$nested_ui7210 <- renderUI({
+    if (input$choices7210 == "Выбор по дате операции") {
+      	dateRangeInput("dates7210", "Выберите период времени:",
+                     start = Sys.Date(), end = Sys.Date(), separator = "-")
+    } else if (input$choices7210 == "Выбор по учетному номеру") {
+      	textInput("text", "Укажите учетный номер:")
+    } else if (input$choices7210 == "Выбор по дате операции и учетному номеру") {
+      fluidRow(
+       	dateRangeInput("dates7210", "Выберите период времени:",
+                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+        textInput("text", "Укажите учетный номер:")
+      )}
+  })
+
+  output$table7210Item2 <- renderRHandsontable({
+
+    rhandsontable(data$df7210_2, colWidths = 150, height = 500, readOnly=TRUE, 
+		contextMenu = FALSE, manualColumnResize = TRUE, dragColumns = FALSE) |>
+      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+  })
+
+  output$download_df7210_1 <- downloadHandler(
+    filename = function() { "df7210_1.xlsx" },
+    content = function(file) { write.xlsx(data$df7210_1, file) })
+
+  output$download_df7210_2 <- downloadHandler(
+    filename = function() { "df7210_2.xlsx" },
+    content = function(file) { write.xlsx(data$df7210_2, file) })
 
 	#**********
 
