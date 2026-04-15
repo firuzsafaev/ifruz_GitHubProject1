@@ -3325,7 +3325,7 @@ ui <- fluidPage(
                       column(2, h5("Выберите счет дебета:")),
                       column(2, selectInput("debit_select", label = NULL, 
                                             choices = c("", "7010_1", "7110_1", "7210_1", 
-					    "7310.1", "7310.2", "7320.1", "7320.2"), selected = ""))
+					    "7310.1", "7310.2", "7320.1"), selected = ""))
                     ),
                     div(class = "debit-credit-table",
                       rHandsontableOutput("debit_table")
@@ -3341,7 +3341,7 @@ ui <- fluidPage(
                       column(2, h5("Выберите счет кредита:")),
                       column(2, selectInput("credit_select", label = NULL,
                                             choices = c("", "7010_1", "7110_1", "7210_1", 
-					    "7310.1", "7310.2", "7320.1", "7320.2"), selected = ""))
+					    "7310.1", "7310.2", "7320.1"), selected = ""))
                     ),
                     div(class = "debit-credit-table",
                       rHandsontableOutput("credit_table")
