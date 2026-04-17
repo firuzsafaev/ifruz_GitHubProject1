@@ -1145,7 +1145,8 @@ check_user_password <- function(username, password) {
 	  } else if (table_name %in% c("app_data_7310_2")) {
 	    return(load_7310_2_data(table_name, session_id, username))
 	  } else if (table_name %in% c("app_data_7320_1")) {
-	    return(load_7320_1_data(table_name, session_id, username)) else {
+	    return(load_7320_1_data(table_name, session_id, username))
+	  } else {
 	    return(NULL)
 	  }
 	}
