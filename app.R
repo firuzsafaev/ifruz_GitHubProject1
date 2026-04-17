@@ -725,6 +725,408 @@ check_user_password <- function(username, password) {
 	  })
 	}
 
+	# Специализированные функции для 7310.1
+	load_7310_1_data <- function(table_name, session_id, username = NULL) {
+	  message("Loading 7310.1 data from: ", table_name, " for session: ", session_id)
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      return(NULL)
+	    }
+	    
+	    if (!is.null(username)) {
+	      query <- "SELECT operation_date, operation_time, document_number, expense_account, 
+	                       expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+	                       correspondence_debit, correspondence_credit, final_balance, username
+	                FROM %s 
+	                WHERE session_id = $1 AND username = $2 
+	                ORDER BY id"
+	    } else {
+	      query <- "SELECT operation_date, operation_time, document_number, expense_account, 
+	                       expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+	                       correspondence_debit, correspondence_credit, final_balance, username
+	                FROM %s 
+	                WHERE session_id = $1 
+	                ORDER BY id"
+	    }
+	    
+	    query <- sprintf(query, table_name)
+	    
+	    if (!is.null(username)) {
+	      result <- dbGetQuery(conn, query, params = list(session_id, username))
+	    } else {
+	      result <- dbGetQuery(conn, query, params = list(session_id))
+	    }
+	    
+	    # Удаляем дубликаты
+	    if (!is.null(result) && nrow(result) > 0) {
+	      result <- result[!duplicated(result), ]
+	    }
+	    
+	    if (nrow(result) == 0) {
+	      dbDisconnect(conn)
+	      return(NULL)
+	    }
+	    
+	    if ("operation_date" %in% names(result)) {
+	      result$operation_date <- as.character(result$operation_date)
+	    }
+	    if ("operation_time" %in% names(result)) {
+	      result$operation_time <- as.character(result$operation_time)
+	    }
+	    
+	    dbDisconnect(conn)
+	    return(result)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) try(dbDisconnect(conn), silent = TRUE)
+	    return(NULL)
+	  })
+	}
+	
+	save_7310_1_data <- function(data, table_name, session_id, username) {
+	  if (is.null(data) || nrow(data) == 0) {
+	    return(FALSE)
+	  }
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      return(FALSE)
+	    }
+	    
+	    dbExecute(conn, "BEGIN")
+	    
+	    # Удаляем только те строки текущей сессии, которые принадлежат текущему пользователю
+	    delete_query <- sprintf("
+	      DELETE FROM %s
+	      WHERE session_id = $1 
+	      AND username = $2
+	    ", table_name)
+	    dbExecute(conn, delete_query, list(session_id, username))
+	   
+	    # Вставляем новые данные от текущего пользователя
+	    insert_query <- sprintf(
+	      "INSERT INTO %s
+	      (session_id, username, operation_date, operation_time, document_number, expense_account, 
+	      expense_period, operation_description, accounting_method, 
+	      initial_balance, credit, debit, correspondence_debit, 
+	      correspondence_credit, final_balance, updated_at)
+	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)",
+	      table_name
+	    )
+	
+	    for (i in 1:nrow(data)) {
+	      # Время проводки: если уже есть – оставляем, иначе ставим текущее
+	      time_val <- as.character(data[[2]][i] %||% NA)
+	      if (is.na(time_val) || time_val == "") {
+	        time_val <- as.character(lubridate::now("Asia/Tashkent"))
+	      }
+	
+	      dbExecute(conn, insert_query, list(
+	        session_id,
+	        if (!is.null(data$Пользователь[i])) as.character(data$Пользователь[i]) else username,
+	        as.character(data[[1]][i] %||% NA),  # operation_date
+	        time_val,                            # operation_time
+	        as.character(data[[3]][i] %||% NA),  # document_number
+	        as.character(data[[4]][i] %||% NA),  # expense_account
+	        as.character(data[[5]][i] %||% NA),  # expense_period
+	        as.character(data[[6]][i] %||% NA),  # operation_description
+	        as.character(data[[7]][i] %||% NA),  # accounting_method
+	        as.numeric(data[[8]][i] %||% 0),     # initial_balance
+	        as.numeric(data[[9]][i] %||% 0),     # credit
+	        as.numeric(data[[10]][i] %||% 0),    # debit
+	        as.character(data[[11]][i] %||% NA), # correspondence_debit
+	        as.character(data[[12]][i] %||% NA), # correspondence_credit
+	        as.numeric(data[[13]][i] %||% 0)     # final_balance
+	      ))
+	    }
+	   
+	    dbExecute(conn, "COMMIT")
+	    dbDisconnect(conn)
+	    return(TRUE)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) {
+	      try(dbExecute(conn, "ROLLBACK"), silent = TRUE)
+	      dbDisconnect(conn)
+	    }
+	    message("Error in save_7310_1_data: ", e$message)
+	    return(FALSE)
+	  })
+	}
+
+	# Специализированные функции для 7310.2
+	load_7310_2_data <- function(table_name, session_id, username = NULL) {
+	  message("Loading 7310.2 data from: ", table_name, " for session: ", session_id)
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      return(NULL)
+	    }
+	    
+	    if (!is.null(username)) {
+	      query <- "SELECT operation_date, operation_time, document_number, expense_account, 
+	                       expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+	                       correspondence_debit, correspondence_credit, final_balance, username
+	                FROM %s 
+	                WHERE session_id = $1 AND username = $2 
+	                ORDER BY id"
+	    } else {
+	      query <- "SELECT operation_date, operation_time, document_number, expense_account, 
+	                       expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+	                       correspondence_debit, correspondence_credit, final_balance, username
+	                FROM %s 
+	                WHERE session_id = $1 
+	                ORDER BY id"
+	    }
+	    
+	    query <- sprintf(query, table_name)
+	    
+	    if (!is.null(username)) {
+	      result <- dbGetQuery(conn, query, params = list(session_id, username))
+	    } else {
+	      result <- dbGetQuery(conn, query, params = list(session_id))
+	    }
+	    
+	    # Удаляем дубликаты
+	    if (!is.null(result) && nrow(result) > 0) {
+	      result <- result[!duplicated(result), ]
+	    }
+	    
+	    if (nrow(result) == 0) {
+	      dbDisconnect(conn)
+	      return(NULL)
+	    }
+	    
+	    if ("operation_date" %in% names(result)) {
+	      result$operation_date <- as.character(result$operation_date)
+	    }
+	    if ("operation_time" %in% names(result)) {
+	      result$operation_time <- as.character(result$operation_time)
+	    }
+	    
+	    dbDisconnect(conn)
+	    return(result)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) try(dbDisconnect(conn), silent = TRUE)
+	    return(NULL)
+	  })
+	}
+	
+	save_7310_2_data <- function(data, table_name, session_id, username) {
+	  if (is.null(data) || nrow(data) == 0) {
+	    return(FALSE)
+	  }
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      return(FALSE)
+	    }
+	    
+	    dbExecute(conn, "BEGIN")
+	    
+	    # Удаляем только те строки текущей сессии, которые принадлежат текущему пользователю
+	    delete_query <- sprintf("
+	      DELETE FROM %s
+	      WHERE session_id = $1 
+	      AND username = $2
+	    ", table_name)
+	    dbExecute(conn, delete_query, list(session_id, username))
+	   
+	    # Вставляем новые данные от текущего пользователя
+	    insert_query <- sprintf(
+	      "INSERT INTO %s
+	      (session_id, username, operation_date, operation_time, document_number, expense_account, 
+	      expense_period, operation_description, accounting_method, 
+	      initial_balance, credit, debit, correspondence_debit, 
+	      correspondence_credit, final_balance, updated_at)
+	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)",
+	      table_name
+	    )
+	
+	    for (i in 1:nrow(data)) {
+	      # Время проводки: если уже есть – оставляем, иначе ставим текущее
+	      time_val <- as.character(data[[2]][i] %||% NA)
+	      if (is.na(time_val) || time_val == "") {
+	        time_val <- as.character(lubridate::now("Asia/Tashkent"))
+	      }
+	
+	      dbExecute(conn, insert_query, list(
+	        session_id,
+	        if (!is.null(data$Пользователь[i])) as.character(data$Пользователь[i]) else username,
+	        as.character(data[[1]][i] %||% NA),  # operation_date
+	        time_val,                            # operation_time
+	        as.character(data[[3]][i] %||% NA),  # document_number
+	        as.character(data[[4]][i] %||% NA),  # expense_account
+	        as.character(data[[5]][i] %||% NA),  # expense_period
+	        as.character(data[[6]][i] %||% NA),  # operation_description
+	        as.character(data[[7]][i] %||% NA),  # accounting_method
+	        as.numeric(data[[8]][i] %||% 0),     # initial_balance
+	        as.numeric(data[[9]][i] %||% 0),     # credit
+	        as.numeric(data[[10]][i] %||% 0),    # debit
+	        as.character(data[[11]][i] %||% NA), # correspondence_debit
+	        as.character(data[[12]][i] %||% NA), # correspondence_credit
+	        as.numeric(data[[13]][i] %||% 0)     # final_balance
+	      ))
+	    }
+	   
+	    dbExecute(conn, "COMMIT")
+	    dbDisconnect(conn)
+	    return(TRUE)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) {
+	      try(dbExecute(conn, "ROLLBACK"), silent = TRUE)
+	      dbDisconnect(conn)
+	    }
+	    message("Error in save_7310_2_data: ", e$message)
+	    return(FALSE)
+	  })
+	}
+
+	# Специализированные функции для 7320.1
+	load_7320_1_data <- function(table_name, session_id, username = NULL) {
+	  message("Loading 7320.1 data from: ", table_name, " for session: ", session_id)
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      return(NULL)
+	    }
+	    
+	    if (!is.null(username)) {
+	      query <- "SELECT operation_date, operation_time, document_number, expense_account, 
+	                       expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+	                       correspondence_debit, correspondence_credit, final_balance, username
+	                FROM %s 
+	                WHERE session_id = $1 AND username = $2 
+	                ORDER BY id"
+	    } else {
+	      query <- "SELECT operation_date, operation_time, document_number, expense_account, 
+	                       expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+	                       correspondence_debit, correspondence_credit, final_balance, username
+	                FROM %s 
+	                WHERE session_id = $1 
+	                ORDER BY id"
+	    }
+	    
+	    query <- sprintf(query, table_name)
+	    
+	    if (!is.null(username)) {
+	      result <- dbGetQuery(conn, query, params = list(session_id, username))
+	    } else {
+	      result <- dbGetQuery(conn, query, params = list(session_id))
+	    }
+	    
+	    # Удаляем дубликаты
+	    if (!is.null(result) && nrow(result) > 0) {
+	      result <- result[!duplicated(result), ]
+	    }
+	    
+	    if (nrow(result) == 0) {
+	      dbDisconnect(conn)
+	      return(NULL)
+	    }
+	    
+	    if ("operation_date" %in% names(result)) {
+	      result$operation_date <- as.character(result$operation_date)
+	    }
+	    if ("operation_time" %in% names(result)) {
+	      result$operation_time <- as.character(result$operation_time)
+	    }
+	    
+	    dbDisconnect(conn)
+	    return(result)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) try(dbDisconnect(conn), silent = TRUE)
+	    return(NULL)
+	  })
+	}
+	
+	save_7320_1_data <- function(data, table_name, session_id, username) {
+	  if (is.null(data) || nrow(data) == 0) {
+	    return(FALSE)
+	  }
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      return(FALSE)
+	    }
+	    
+	    dbExecute(conn, "BEGIN")
+	    
+	    # Удаляем только те строки текущей сессии, которые принадлежат текущему пользователю
+	    delete_query <- sprintf("
+	      DELETE FROM %s
+	      WHERE session_id = $1 
+	      AND username = $2
+	    ", table_name)
+	    dbExecute(conn, delete_query, list(session_id, username))
+	   
+	    # Вставляем новые данные от текущего пользователя
+	    insert_query <- sprintf(
+	      "INSERT INTO %s
+	      (session_id, username, operation_date, operation_time, document_number, expense_account, 
+	      expense_period, operation_description, accounting_method, 
+	      initial_balance, credit, debit, correspondence_debit, 
+	      correspondence_credit, final_balance, updated_at)
+	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)",
+	      table_name
+	    )
+	
+	    for (i in 1:nrow(data)) {
+	      # Время проводки: если уже есть – оставляем, иначе ставим текущее
+	      time_val <- as.character(data[[2]][i] %||% NA)
+	      if (is.na(time_val) || time_val == "") {
+	        time_val <- as.character(lubridate::now("Asia/Tashkent"))
+	      }
+	
+	      dbExecute(conn, insert_query, list(
+	        session_id,
+	        if (!is.null(data$Пользователь[i])) as.character(data$Пользователь[i]) else username,
+	        as.character(data[[1]][i] %||% NA),  # operation_date
+	        time_val,                            # operation_time
+	        as.character(data[[3]][i] %||% NA),  # document_number
+	        as.character(data[[4]][i] %||% NA),  # expense_account
+	        as.character(data[[5]][i] %||% NA),  # expense_period
+	        as.character(data[[6]][i] %||% NA),  # operation_description
+	        as.character(data[[7]][i] %||% NA),  # accounting_method
+	        as.numeric(data[[8]][i] %||% 0),     # initial_balance
+	        as.numeric(data[[9]][i] %||% 0),     # credit
+	        as.numeric(data[[10]][i] %||% 0),    # debit
+	        as.character(data[[11]][i] %||% NA), # correspondence_debit
+	        as.character(data[[12]][i] %||% NA), # correspondence_credit
+	        as.numeric(data[[13]][i] %||% 0)     # final_balance
+	      ))
+	    }
+	   
+	    dbExecute(conn, "COMMIT")
+	    dbDisconnect(conn)
+	    return(TRUE)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) {
+	      try(dbExecute(conn, "ROLLBACK"), silent = TRUE)
+	      dbDisconnect(conn)
+	    }
+	    message("Error in save_7320_1_data: ", e$message)
+	    return(FALSE)
+	  })
+	}
+
 	#**********
 
 	# функция загрузки данных - удаляем дубликаты (ОБЩАЯ ДИСПЕТЧЕРИЗАЦИЯ)
@@ -738,7 +1140,12 @@ check_user_password <- function(username, password) {
 	    return(load_7110_1_data(table_name, session_id, username))
 	  } else if (table_name %in% c("app_data_7210_1")) {
 	    return(load_7210_1_data(table_name, session_id, username))
-	  } else {
+	  } else if (table_name %in% c("app_data_7310_1")) {
+	    return(load_7310_1_data(table_name, session_id, username))
+	  } else if (table_name %in% c("app_data_7310_2")) {
+	    return(load_7310_2_data(table_name, session_id, username))
+	  } else if (table_name %in% c("app_data_7320_1")) {
+	    return(load_7320_1_data(table_name, session_id, username)) else {
 	    return(NULL)
 	  }
 	}
@@ -756,6 +1163,12 @@ check_user_password <- function(username, password) {
 	    return(save_7110_1_data(data, table_name, session_id, username))
 	  } else if (table_name %in% c("app_data_7210_1")) {
 	    return(save_7210_1_data(data, table_name, session_id, username))
+	  } else if (table_name %in% c("app_data_7310_1")) {
+	    return(save_7310_1_data(data, table_name, session_id, username))
+	  } else if (table_name %in% c("app_data_7310_2")) {
+	    return(save_7310_2_data(data, table_name, session_id, username))
+	  } else if (table_name %in% c("app_data_7320_1")) {
+	    return(save_7320_1_data(data, table_name, session_id, username))
 	  } else {
 	    return(FALSE)
 	  }
@@ -780,13 +1193,10 @@ check_user_password <- function(username, password) {
 			correspondence_debit, correspondence_credit,
 			final_balance, username
 	              FROM %s 
-	              WHERE session_id = $1 
-	              ORDER BY 	operation_date, operation_time, 
+	              WHERE session_id = $1
+		      ORDER BY operation_date, operation_time, 
 				document_number, operation_description, 
-				accounting_method, initial_balance, 
-				debit, credit, correspondence_debit,
-				correspondence_credit, final_balance, 
-				username, updated_at DESC, id DESC"
+				accounting_method, username, updated_at DESC, id DESC"
 	    
 	    query <- sprintf(query, table_name)
 	    result <- dbGetQuery(conn, query, params = list(session_id))
@@ -831,12 +1241,9 @@ check_user_password <- function(username, password) {
 			final_balance, username
 	              FROM %s 
 	              WHERE session_id = $1 
-	              ORDER BY 	operation_date, operation_time, 
+		      ORDER BY operation_date, operation_time, 
 				document_number, operation_description, 
-				accounting_method, initial_balance, 
-				debit, credit, correspondence_debit,
-				correspondence_credit, final_balance, 
-				username, updated_at DESC, id DESC"
+				accounting_method, username, updated_at DESC, id DESC"
 	    
 	    query <- sprintf(query, table_name)
 	    result <- dbGetQuery(conn, query, params = list(session_id))
@@ -881,12 +1288,9 @@ check_user_password <- function(username, password) {
 			final_balance, username
 	              FROM %s 
 	              WHERE session_id = $1 
-	              ORDER BY 	operation_date, operation_time, 
+		      ORDER BY operation_date, operation_time, 
 				document_number, operation_description, 
-				accounting_method, initial_balance, 
-				debit, credit, correspondence_debit,
-				correspondence_credit, final_balance, 
-				username, updated_at DESC, id DESC"
+				accounting_method, username, updated_at DESC, id DESC"
 	    
 	    query <- sprintf(query, table_name)
 	    result <- dbGetQuery(conn, query, params = list(session_id))
@@ -912,6 +1316,138 @@ check_user_password <- function(username, password) {
 	  })
 	}
 
+     load_merged_7310_1_data <- function(table_name, session_id) {
+	message("Loading merged 7310.1 data for session: ", session_id)
+	
+	conn <- NULL
+	tryCatch({
+		conn <- create_database_connection()
+		if (is.null(conn)) {
+			return(NULL)
+		}
+		
+		query <- "SELECT DISTINCT ON (operation_date, operation_time, document_number, expense_account, 
+		            		expense_period, operation_description, accounting_method)
+		          operation_date, operation_time, document_number, expense_account, 
+		          expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+		          correspondence_debit, correspondence_credit, final_balance, username
+		          FROM %s 
+		          WHERE session_id = $1 
+		          ORDER BY operation_date, operation_time, document_number, expense_account, 
+		                   expense_period, operation_description, accounting_method, username, updated_at DESC, id DESC"
+		
+		query <- sprintf(query, table_name)
+		result <- dbGetQuery(conn, query, params = list(session_id))
+		
+		if (nrow(result) == 0) {
+			dbDisconnect(conn)
+			return(NULL)
+		}
+		
+		if ("operation_date" %in% names(result)) {
+			result$operation_date <- as.character(result$operation_date)
+		}
+		if ("operation_time" %in% names(result)) {
+			result$operation_time <- as.character(result$operation_time)
+		}
+		
+		dbDisconnect(conn)
+		return(result)
+		
+	}, error = function(e) {
+		if (!is.null(conn)) try(dbDisconnect(conn), silent = TRUE)
+		return(NULL)
+	})
+     }
+
+     load_merged_7310_2_data <- function(table_name, session_id) {
+	message("Loading merged 7310.2 data for session: ", session_id)
+	
+	conn <- NULL
+	tryCatch({
+		conn <- create_database_connection()
+		if (is.null(conn)) {
+			return(NULL)
+		}
+		
+		query <- "SELECT DISTINCT ON (operation_date, operation_time, document_number, expense_account, 
+		            		expense_period, operation_description, accounting_method)
+		          operation_date, operation_time, document_number, expense_account, 
+		          expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+		          correspondence_debit, correspondence_credit, final_balance, username
+		          FROM %s 
+		          WHERE session_id = $1 
+		          ORDER BY operation_date, operation_time, document_number, expense_account, 
+		                   expense_period, operation_description, accounting_method, username, updated_at DESC, id DESC"
+		
+		query <- sprintf(query, table_name)
+		result <- dbGetQuery(conn, query, params = list(session_id))
+		
+		if (nrow(result) == 0) {
+			dbDisconnect(conn)
+			return(NULL)
+		}
+		
+		if ("operation_date" %in% names(result)) {
+			result$operation_date <- as.character(result$operation_date)
+		}
+		if ("operation_time" %in% names(result)) {
+			result$operation_time <- as.character(result$operation_time)
+		}
+		
+		dbDisconnect(conn)
+		return(result)
+		
+	}, error = function(e) {
+		if (!is.null(conn)) try(dbDisconnect(conn), silent = TRUE)
+		return(NULL)
+	})
+     }
+
+     load_merged_7320_1_data <- function(table_name, session_id) {
+	message("Loading merged 7320.1 data for session: ", session_id)
+	
+	conn <- NULL
+	tryCatch({
+		conn <- create_database_connection()
+		if (is.null(conn)) {
+			return(NULL)
+		}
+		
+		query <- "SELECT DISTINCT ON (operation_date, operation_time, document_number, expense_account, 
+		            		expense_period, operation_description, accounting_method)
+		          operation_date, operation_time, document_number, expense_account, 
+		          expense_period, operation_description, accounting_method, initial_balance, credit, debit,
+		          correspondence_debit, correspondence_credit, final_balance, username
+		          FROM %s 
+		          WHERE session_id = $1 
+		          ORDER BY operation_date, operation_time, document_number, expense_account, 
+		                   expense_period, operation_description, accounting_method, username, updated_at DESC, id DESC"
+		
+		query <- sprintf(query, table_name)
+		result <- dbGetQuery(conn, query, params = list(session_id))
+		
+		if (nrow(result) == 0) {
+			dbDisconnect(conn)
+			return(NULL)
+		}
+		
+		if ("operation_date" %in% names(result)) {
+			result$operation_date <- as.character(result$operation_date)
+		}
+		if ("operation_time" %in% names(result)) {
+			result$operation_time <- as.character(result$operation_time)
+		}
+		
+		dbDisconnect(conn)
+		return(result)
+		
+	}, error = function(e) {
+		if (!is.null(conn)) try(dbDisconnect(conn), silent = TRUE)
+		return(NULL)
+	})
+     }
+
 	# Функция загрузки ОБЪЕДИНЕННЫХ данных для сессии (всех пользователей, но без дубликатов) (ОБЩАЯ ДИСПЕТЧЕРИЗАЦИЯ)
 	load_merged_session_data <- function(table_name, session_id) {
 	  message("Loading merged data for session: ", session_id)
@@ -923,6 +1459,12 @@ check_user_password <- function(username, password) {
 	    return(load_merged_7110_1_data(table_name, session_id))
 	  } else if (table_name %in% c("app_data_7210_1")) {
 	    return(load_merged_7210_1_data(table_name, session_id))
+	  } else if (table_name %in% c("app_data_7310_1")) {
+	    return(load_merged_7310_1_data(table_name, session_id))
+	  } else if (table_name %in% c("app_data_7310_2")) {
+	    return(load_merged_7310_2_data(table_name, session_id))
+	  } else if (table_name %in% c("app_data_7320_1")) {
+	    return(load_merged_7320_1_data(table_name, session_id))
 	  } else {
 	    return(NULL)
 	  }
@@ -1175,6 +1717,258 @@ check_user_password <- function(username, password) {
 	  })
 	}
 
+	save_general_7310_1_data <- function(data, table_name, session_id, username) {
+	  if (is.null(data)) {
+	    message("No data to save for table: ", table_name)
+	    # Если данные NULL, удаляем все записи сессии
+	    data <- data.frame()
+	  }
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      message("Failed to connect to database")
+	      return(FALSE)
+	    }
+	    
+	    dbExecute(conn, "BEGIN")
+	    
+	    message(paste("Saving data to", table_name, "in session", session_id))
+	    message(paste("Number of rows to save:", nrow(data)))
+	    
+	    delete_query <- sprintf("
+	      DELETE FROM %s
+	      WHERE session_id = $1
+	    ", table_name)
+	    dbExecute(conn, delete_query, list(session_id))
+	    message("Deleted all data for session: ", session_id)
+	    
+	    # Вставляем новые данные (общие для всех пользователей)
+	    if (nrow(data) > 0) {
+	      insert_query <- sprintf(
+	        "INSERT INTO %s
+	        (session_id, username, operation_date, operation_time, document_number, expense_account, 
+	        expense_period, operation_description, accounting_method, 
+	        initial_balance, credit, debit, correspondence_debit, 
+	        correspondence_credit, final_balance)
+	        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+	        table_name
+	      )
+	      
+	      for (i in 1:nrow(data)) {
+	        # Время проводки: если уже есть – оставляем, иначе ставим текущее
+	        time_val <- as.character(data[[2]][i] %||% NA)
+	        if (is.na(time_val) || time_val == "") {
+	          time_val <- as.character(lubridate::now("Asia/Tashkent"))
+	        }
+	        
+	        dbExecute(conn, insert_query, list(
+	          session_id,
+	          if (!is.null(data$Пользователь[i])) as.character(data$Пользователь[i]) else username,
+	          as.character(data[[1]][i] %||% NA),  # operation_date
+	          time_val,                            # operation_time
+	          as.character(data[[3]][i] %||% NA),  # document_number
+	          as.character(data[[4]][i] %||% NA),  # expense_account
+	          as.character(data[[5]][i] %||% NA),  # expense_period
+	          as.character(data[[6]][i] %||% NA),  # operation_description
+	          as.character(data[[7]][i] %||% NA),  # accounting_method
+	          as.numeric(data[[8]][i] %||% 0),     # initial_balance
+	          as.numeric(data[[9]][i] %||% 0),     # credit
+	          as.numeric(data[[10]][i] %||% 0),    # debit
+	          as.character(data[[11]][i] %||% NA), # correspondence_debit
+	          as.character(data[[12]][i] %||% NA), # correspondence_credit
+	          as.numeric(data[[13]][i] %||% 0)     # final_balance
+	        ))
+	      }
+	      message("Inserted ", nrow(data), " rows for session: ", session_id)
+	    } else {
+	      message("No new data to insert for session: ", session_id)
+	    }
+	    
+	    dbExecute(conn, "COMMIT")
+	    dbDisconnect(conn)
+	    message("Successfully saved data for session: ", session_id)
+	    return(TRUE)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) {
+	      try(dbExecute(conn, "ROLLBACK"), silent = TRUE)
+	      dbDisconnect(conn)
+	    }
+	    message("Error in save_general_7310_1_data: ", e$message)
+	    return(FALSE)
+	  })
+	}
+
+	save_general_7310_2_data <- function(data, table_name, session_id, username) {
+	  if (is.null(data)) {
+	    message("No data to save for table: ", table_name)
+	    # Если данные NULL, удаляем все записи сессии
+	    data <- data.frame()
+	  }
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      message("Failed to connect to database")
+	      return(FALSE)
+	    }
+	    
+	    dbExecute(conn, "BEGIN")
+	    
+	    message(paste("Saving data to", table_name, "in session", session_id))
+	    message(paste("Number of rows to save:", nrow(data)))
+	    
+	    delete_query <- sprintf("
+	      DELETE FROM %s
+	      WHERE session_id = $1
+	    ", table_name)
+	    dbExecute(conn, delete_query, list(session_id))
+	    message("Deleted all data for session: ", session_id)
+	    
+	    # Вставляем новые данные (общие для всех пользователей)
+	    if (nrow(data) > 0) {
+	      insert_query <- sprintf(
+	        "INSERT INTO %s
+	        (session_id, username, operation_date, operation_time, document_number, expense_account, 
+	        expense_period, operation_description, accounting_method, 
+	        initial_balance, credit, debit, correspondence_debit, 
+	        correspondence_credit, final_balance)
+	        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+	        table_name
+	      )
+	      
+	      for (i in 1:nrow(data)) {
+	        # Время проводки: если уже есть – оставляем, иначе ставим текущее
+	        time_val <- as.character(data[[2]][i] %||% NA)
+	        if (is.na(time_val) || time_val == "") {
+	          time_val <- as.character(lubridate::now("Asia/Tashkent"))
+	        }
+	        
+	        dbExecute(conn, insert_query, list(
+	          session_id,
+	          if (!is.null(data$Пользователь[i])) as.character(data$Пользователь[i]) else username,
+	          as.character(data[[1]][i] %||% NA),  # operation_date
+	          time_val,                            # operation_time
+	          as.character(data[[3]][i] %||% NA),  # document_number
+	          as.character(data[[4]][i] %||% NA),  # expense_account
+	          as.character(data[[5]][i] %||% NA),  # expense_period
+	          as.character(data[[6]][i] %||% NA),  # operation_description
+	          as.character(data[[7]][i] %||% NA),  # accounting_method
+	          as.numeric(data[[8]][i] %||% 0),     # initial_balance
+	          as.numeric(data[[9]][i] %||% 0),     # credit
+	          as.numeric(data[[10]][i] %||% 0),    # debit
+	          as.character(data[[11]][i] %||% NA), # correspondence_debit
+	          as.character(data[[12]][i] %||% NA), # correspondence_credit
+	          as.numeric(data[[13]][i] %||% 0)     # final_balance
+	        ))
+	      }
+	      message("Inserted ", nrow(data), " rows for session: ", session_id)
+	    } else {
+	      message("No new data to insert for session: ", session_id)
+	    }
+	    
+	    dbExecute(conn, "COMMIT")
+	    dbDisconnect(conn)
+	    message("Successfully saved data for session: ", session_id)
+	    return(TRUE)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) {
+	      try(dbExecute(conn, "ROLLBACK"), silent = TRUE)
+	      dbDisconnect(conn)
+	    }
+	    message("Error in save_general_7310_2_data: ", e$message)
+	    return(FALSE)
+	  })
+	}
+
+	save_general_7320_1_data <- function(data, table_name, session_id, username) {
+	  if (is.null(data)) {
+	    message("No data to save for table: ", table_name)
+	    # Если данные NULL, удаляем все записи сессии
+	    data <- data.frame()
+	  }
+	  
+	  conn <- NULL
+	  tryCatch({
+	    conn <- create_database_connection()
+	    if (is.null(conn)) {
+	      message("Failed to connect to database")
+	      return(FALSE)
+	    }
+	    
+	    dbExecute(conn, "BEGIN")
+	    
+	    message(paste("Saving data to", table_name, "in session", session_id))
+	    message(paste("Number of rows to save:", nrow(data)))
+	    
+	    delete_query <- sprintf("
+	      DELETE FROM %s
+	      WHERE session_id = $1
+	    ", table_name)
+	    dbExecute(conn, delete_query, list(session_id))
+	    message("Deleted all data for session: ", session_id)
+	    
+	    # Вставляем новые данные (общие для всех пользователей)
+	    if (nrow(data) > 0) {
+	      insert_query <- sprintf(
+	        "INSERT INTO %s
+	        (session_id, username, operation_date, operation_time, document_number, expense_account, 
+	        expense_period, operation_description, accounting_method, 
+	        initial_balance, credit, debit, correspondence_debit, 
+	        correspondence_credit, final_balance)
+	        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+	        table_name
+	      )
+	      
+	      for (i in 1:nrow(data)) {
+	        # Время проводки: если уже есть – оставляем, иначе ставим текущее
+	        time_val <- as.character(data[[2]][i] %||% NA)
+	        if (is.na(time_val) || time_val == "") {
+	          time_val <- as.character(lubridate::now("Asia/Tashkent"))
+	        }
+	        
+	        dbExecute(conn, insert_query, list(
+	          session_id,
+	          if (!is.null(data$Пользователь[i])) as.character(data$Пользователь[i]) else username,
+	          as.character(data[[1]][i] %||% NA),  # operation_date
+	          time_val,                            # operation_time
+	          as.character(data[[3]][i] %||% NA),  # document_number
+	          as.character(data[[4]][i] %||% NA),  # expense_account
+	          as.character(data[[5]][i] %||% NA),  # expense_period
+	          as.character(data[[6]][i] %||% NA),  # operation_description
+	          as.character(data[[7]][i] %||% NA),  # accounting_method
+	          as.numeric(data[[8]][i] %||% 0),     # initial_balance
+	          as.numeric(data[[9]][i] %||% 0),     # credit
+	          as.numeric(data[[10]][i] %||% 0),    # debit
+	          as.character(data[[11]][i] %||% NA), # correspondence_debit
+	          as.character(data[[12]][i] %||% NA), # correspondence_credit
+	          as.numeric(data[[13]][i] %||% 0)     # final_balance
+	        ))
+	      }
+	      message("Inserted ", nrow(data), " rows for session: ", session_id)
+	    } else {
+	      message("No new data to insert for session: ", session_id)
+	    }
+	    
+	    dbExecute(conn, "COMMIT")
+	    dbDisconnect(conn)
+	    message("Successfully saved data for session: ", session_id)
+	    return(TRUE)
+	    
+	  }, error = function(e) {
+	    if (!is.null(conn)) {
+	      try(dbExecute(conn, "ROLLBACK"), silent = TRUE)
+	      dbDisconnect(conn)
+	    }
+	    message("Error in save_general_7320_1_data: ", e$message)
+	    return(FALSE)
+	  })
+	}
+
 	# Функция сохранения данных – с опцией per‑user
 	save_data_general <- function(data, table_name, session_id, username) {
 
@@ -1191,6 +1985,12 @@ check_user_password <- function(username, password) {
 	    success <- save_general_7110_1_data(data, table_name, session_id, username)
 	  } else if (table_name %in% c("app_data_7210_1")) {
 	    success <- save_general_7210_1_data(data, table_name, session_id, username)
+	  } else if (table_name %in% c("app_data_7310_1")) {
+	    success <- save_general_7310_1_data(data, table_name, session_id, username)
+	  } else if (table_name %in% c("app_data_7310_2")) {
+	    success <- save_general_7310_2_data(data, table_name, session_id, username)
+	  } else if (table_name %in% c("app_data_7320_1")) {
+	    success <- save_general_7320_1_data(data, table_name, session_id, username)
 	  } else {
 	    return(FALSE)
 	  }
@@ -1292,33 +2092,10 @@ get_last_update <- function(session_id) {
 	  for (table_name in names(tables)) {
 	    dbExecute(conn, tables[[table_name]])
 	  }
-	  
-	  # Add columns if they don't exist
-	  alter_queries <- list(
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS operation_date DATE",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS operation_time TIMESTAMP",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS document_number VARCHAR(255)",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS operation_description TEXT",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS accounting_method VARCHAR(255)",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS initial_balance NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS debit NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS credit NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS correspondence_debit VARCHAR(255)",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS correspondence_credit VARCHAR(255)",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS final_balance NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS username VARCHAR(255)",
-	    "ALTER TABLE app_data_7010_1 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-	  )
-	  
-	  for (alter_query in alter_queries) {
-	    try(dbExecute(conn, alter_query), silent = TRUE)
-	  }
-	  
+	    
 	  # Create indexes for better performance on merged queries
 	  index_queries <- list(
-	    "CREATE INDEX IF NOT EXISTS idx_7010_1_key ON app_data_7010_1 (operation_date, operation_time, document_number, 
-	               operation_description, accounting_method, initial_balance, debit, credit, 
-	               correspondence_debit, correspondence_credit, final_balance, username, updated_at DESC, id DESC)"
+	    "CREATE INDEX IF NOT EXISTS idx_7010_1_key ON app_data_7010_1 (session_id, operation_date, operation_time, username, updated_at DESC, id DESC)"
 	  )
 	  
 	  for (index_query in index_queries) {
@@ -1353,33 +2130,10 @@ get_last_update <- function(session_id) {
 	  for (table_name in names(tables)) {
 	    dbExecute(conn, tables[[table_name]])
 	  }
-	  
-	  # Add columns if they don't exist
-	  alter_queries <- list(
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS operation_date DATE",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS operation_time TIMESTAMP",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS document_number VARCHAR(255)",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS operation_description TEXT",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS accounting_method VARCHAR(255)",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS initial_balance NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS debit NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS credit NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS correspondence_debit VARCHAR(255)",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS correspondence_credit VARCHAR(255)",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS final_balance NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS username VARCHAR(255)",
-	    "ALTER TABLE app_data_7110_1 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-	  )
-	  
-	  for (alter_query in alter_queries) {
-	    try(dbExecute(conn, alter_query), silent = TRUE)
-	  }
-	  
+	    
 	  # Create indexes for better performance on merged queries
 	  index_queries <- list(
-	    "CREATE INDEX IF NOT EXISTS idx_7110_1_key ON app_data_7110_1 (operation_date, operation_time, document_number, 
-	               operation_description, accounting_method, initial_balance, debit, credit, 
-	               correspondence_debit, correspondence_credit, final_balance, username, updated_at DESC, id DESC)"
+	    "CREATE INDEX IF NOT EXISTS idx_7110_1_key ON app_data_7110_1 (session_id, operation_date, operation_time, username, updated_at DESC, id DESC)"
 	  )
 	  
 	  for (index_query in index_queries) {
@@ -1415,32 +2169,126 @@ get_last_update <- function(session_id) {
 	    dbExecute(conn, tables[[table_name]])
 	  }
 	  
-	  # Add columns if they don't exist
-	  alter_queries <- list(
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS operation_date DATE",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS operation_time TIMESTAMP",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS document_number VARCHAR(255)",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS operation_description TEXT",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS accounting_method VARCHAR(255)",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS initial_balance NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS debit NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS credit NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS correspondence_debit VARCHAR(255)",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS correspondence_credit VARCHAR(255)",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS final_balance NUMERIC DEFAULT 0",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS username VARCHAR(255)",
-	    "ALTER TABLE app_data_7210_1 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-	  )
-	  
-	  for (alter_query in alter_queries) {
-	    try(dbExecute(conn, alter_query), silent = TRUE)
-	  }
-	  
 	  # Create indexes for better performance on merged queries
 	  index_queries <- list(
-	    "CREATE INDEX IF NOT EXISTS idx_7210_1_key ON app_data_7210_1 (operation_date, operation_time, document_number, 
-	               operation_description, accounting_method, initial_balance, debit, credit, 
-	               correspondence_debit, correspondence_credit, final_balance, username, updated_at DESC, id DESC)"
+	    "CREATE INDEX IF NOT EXISTS idx_7210_1_key ON app_data_7210_1 (session_id, operation_date, operation_time, username, updated_at DESC, id DESC)"
+	  )
+	  
+	  for (index_query in index_queries) {
+	    try(dbExecute(conn, index_query), silent = TRUE)
+	  }
+	  
+	  return(TRUE)
+	}
+
+	initialize_7310_1_table <- function(conn) {
+	  tables <- list(
+	    app_data_7310_1 = "
+	      CREATE TABLE IF NOT EXISTS app_data_7310_1 (
+	        id SERIAL PRIMARY KEY,
+	        session_id VARCHAR(255) NOT NULL,
+	        operation_date DATE,
+	        operation_time TIMESTAMP,
+	        document_number VARCHAR(255),
+	        expense_account VARCHAR(255),
+	        expense_period VARCHAR(255),
+	        operation_description TEXT,
+	        accounting_method VARCHAR(255),
+	        initial_balance NUMERIC DEFAULT 0,
+	        credit NUMERIC DEFAULT 0,
+	        debit NUMERIC DEFAULT 0,
+	        correspondence_debit VARCHAR(255),
+	        correspondence_credit VARCHAR(255),
+	        final_balance NUMERIC DEFAULT 0,
+	        username VARCHAR(255),
+	        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	      )"
+	  )
+	  
+	  for (table_name in names(tables)) {
+	    dbExecute(conn, tables[[table_name]])
+	  }
+	  
+	  index_queries <- list(
+	    "CREATE INDEX IF NOT EXISTS idx_7310_1_key ON app_data_7310_1 (session_id, operation_date, operation_time, username, updated_at DESC, id DESC)"
+	  )
+	  
+	  for (index_query in index_queries) {
+	    try(dbExecute(conn, index_query), silent = TRUE)
+	  }
+	  
+	  return(TRUE)
+	}
+
+	initialize_7310_2_table <- function(conn) {
+	  tables <- list(
+	    app_data_7310_2 = "
+	      CREATE TABLE IF NOT EXISTS app_data_7310_2 (
+	        id SERIAL PRIMARY KEY,
+	        session_id VARCHAR(255) NOT NULL,
+	        operation_date DATE,
+	        operation_time TIMESTAMP,
+	        document_number VARCHAR(255),
+	        expense_account VARCHAR(255),
+	        expense_period VARCHAR(255),
+	        operation_description TEXT,
+	        accounting_method VARCHAR(255),
+	        initial_balance NUMERIC DEFAULT 0,
+	        credit NUMERIC DEFAULT 0,
+	        debit NUMERIC DEFAULT 0,
+	        correspondence_debit VARCHAR(255),
+	        correspondence_credit VARCHAR(255),
+	        final_balance NUMERIC DEFAULT 0,
+	        username VARCHAR(255),
+	        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	      )"
+	  )
+	  
+	  for (table_name in names(tables)) {
+	    dbExecute(conn, tables[[table_name]])
+	  }
+	  
+	  index_queries <- list(
+	    "CREATE INDEX IF NOT EXISTS idx_7310_2_key ON app_data_7310_2 (session_id, operation_date, operation_time, username, updated_at DESC, id DESC)"
+	  )
+	  
+	  for (index_query in index_queries) {
+	    try(dbExecute(conn, index_query), silent = TRUE)
+	  }
+	  
+	  return(TRUE)
+	}
+
+	initialize_7320_1_table <- function(conn) {
+	  tables <- list(
+	    app_data_7320_1 = "
+	      CREATE TABLE IF NOT EXISTS app_data_7320_1 (
+	        id SERIAL PRIMARY KEY,
+	        session_id VARCHAR(255) NOT NULL,
+	        operation_date DATE,
+	        operation_time TIMESTAMP,
+	        document_number VARCHAR(255),
+	        expense_account VARCHAR(255),
+	        expense_period VARCHAR(255),
+	        operation_description TEXT,
+	        accounting_method VARCHAR(255),
+	        initial_balance NUMERIC DEFAULT 0,
+	        credit NUMERIC DEFAULT 0,
+	        debit NUMERIC DEFAULT 0,
+	        correspondence_debit VARCHAR(255),
+	        correspondence_credit VARCHAR(255),
+	        final_balance NUMERIC DEFAULT 0,
+	        username VARCHAR(255),
+	        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	      )"
+	  )
+	  
+	  for (table_name in names(tables)) {
+	    dbExecute(conn, tables[[table_name]])
+	  }
+	  
+	  index_queries <- list(
+	    "CREATE INDEX IF NOT EXISTS idx_7320_1_key ON app_data_7320_1 (session_id, operation_date, operation_time, username, updated_at DESC, id DESC)"
 	  )
 	  
 	  for (index_query in index_queries) {
@@ -1463,6 +2311,9 @@ initialize_database_simple <- function() {
     initialize_7010_1_table(conn)
     initialize_7110_1_table(conn)
     initialize_7210_1_table(conn)
+    initialize_7310_1_table(conn)
+    initialize_7310_2_table(conn)
+    initialize_7320_1_table(conn)
     
     # Инициализируем общие таблицы
     dbExecute(conn, "
@@ -1689,6 +2540,114 @@ validate_operation_dates <- function(df, date_col = "Дата операции")
 		"Пользователь" = as.character(NA),
                 stringsAsFactors = FALSE)
 
+	#7310.1
+
+	DF7310.1 <- data.table(
+      		"Дата операции" = as.character(NA),
+ 		"Время проводки" = as.character(NA),
+      		"Учетный номер" = as.character(NA),
+      		"Счет № статьи расхода" = as.character(NA),
+      		"Период, к которому относятся расходы" = as.character(NA),
+      		"Содержание операции" = as.character(NA),
+      		"Метод учета" = as.character(NA),
+      		"Сальдо начальное" = as.numeric(NA),				#row 8
+      		"Кредит" = as.numeric(NA),					#row 9
+      		"Дебет" = as.numeric(NA),					#row 10
+     		"Счет № (дебет)" = as.character(NA),
+      		"Счет № (кредит)" = as.character(NA),
+      		"Сальдо конечное" = as.numeric(NA),
+		"Пользователь" = as.character(NA),
+                stringsAsFactors = FALSE)
+
+	DF7310.1_2 <- data.table(
+      		"Дата операции" = as.character(NA),
+ 		"Время проводки" = as.character(NA),
+      		"Учетный номер" = as.character(NA),
+      		"Счет № статьи расхода" = as.character(NA),
+      		"Период, к которому относятся расходы" = as.character(NA),
+      		"Содержание операции" = as.character(NA),
+      		"Метод учета" = as.character(NA),
+      		"Сальдо начальное" = as.numeric(NA),
+      		"Кредит" = as.numeric(NA), 
+      		"Дебет" = as.numeric(NA),
+     		"Счет № (дебет)" = as.character(NA),
+      		"Счет № (кредит)" = as.character(NA),
+      		"Сальдо конечное" = as.numeric(NA),
+		"Пользователь" = as.character(NA),
+                stringsAsFactors = FALSE)
+
+	#7310.2
+
+	DF7310.2 <- data.table(
+      		"Дата операции" = as.character(NA),
+ 		"Время проводки" = as.character(NA),
+      		"Учетный номер" = as.character(NA),
+      		"Счет № статьи расхода" = as.character(NA),
+      		"Период, к которому относятся расходы" = as.character(NA),
+      		"Содержание операции" = as.character(NA),
+      		"Метод учета" = as.character(NA),
+      		"Сальдо начальное" = as.numeric(NA),				#row 8
+      		"Кредит" = as.numeric(NA),					#row 9
+      		"Дебет" = as.numeric(NA),					#row 10
+     		"Счет № (дебет)" = as.character(NA),
+      		"Счет № (кредит)" = as.character(NA),
+      		"Сальдо конечное" = as.numeric(NA),
+		"Пользователь" = as.character(NA),
+                stringsAsFactors = FALSE)
+
+	DF7310.2_2 <- data.table(
+      		"Дата операции" = as.character(NA),
+ 		"Время проводки" = as.character(NA),
+      		"Учетный номер" = as.character(NA),
+      		"Счет № статьи расхода" = as.character(NA),
+      		"Период, к которому относятся расходы" = as.character(NA),
+      		"Содержание операции" = as.character(NA),
+      		"Метод учета" = as.character(NA),
+      		"Сальдо начальное" = as.numeric(NA),
+      		"Кредит" = as.numeric(NA), 
+      		"Дебет" = as.numeric(NA),
+     		"Счет № (дебет)" = as.character(NA),
+      		"Счет № (кредит)" = as.character(NA),
+      		"Сальдо конечное" = as.numeric(NA),
+		"Пользователь" = as.character(NA),
+                stringsAsFactors = FALSE)
+
+	#7320.1
+
+	DF7320.1 <- data.table(
+      		"Дата операции" = as.character(NA),
+ 		"Время проводки" = as.character(NA),
+      		"Учетный номер" = as.character(NA),
+      		"Счет № статьи расхода" = as.character(NA),
+      		"Период, к которому относятся расходы" = as.character(NA),
+      		"Содержание операции" = as.character(NA),
+      		"Метод учета" = as.character(NA),
+      		"Сальдо начальное" = as.numeric(NA),				#row 8
+      		"Кредит" = as.numeric(NA),					#row 9
+      		"Дебет" = as.numeric(NA),					#row 10
+     		"Счет № (дебет)" = as.character(NA),
+      		"Счет № (кредит)" = as.character(NA),
+      		"Сальдо конечное" = as.numeric(NA),
+		"Пользователь" = as.character(NA),
+                stringsAsFactors = FALSE)
+
+	DF7320.1_2 <- data.table(
+      		"Дата операции" = as.character(NA),
+ 		"Время проводки" = as.character(NA),
+      		"Учетный номер" = as.character(NA),
+      		"Счет № статьи расхода" = as.character(NA),
+      		"Период, к которому относятся расходы" = as.character(NA),
+      		"Содержание операции" = as.character(NA),
+      		"Метод учета" = as.character(NA),
+      		"Сальдо начальное" = as.numeric(NA),
+      		"Кредит" = as.numeric(NA), 
+      		"Дебет" = as.numeric(NA),
+     		"Счет № (дебет)" = as.character(NA),
+      		"Счет № (кредит)" = as.character(NA),
+      		"Сальдо конечное" = as.numeric(NA),
+		"Пользователь" = as.character(NA),
+                stringsAsFactors = FALSE)
+
 	#*********
 
 	# Таблицы для панели "Управление данными"
@@ -1764,6 +2723,66 @@ validate_operation_dates <- function(df, date_col = "Дата операции")
                 stringsAsFactors = FALSE)
 
 	DF_empty_credit_7210 <- copy(DF_empty_debit_7210)
+
+	# Пустые таблицы для 7310.1
+	DF_empty_debit_7310_1 <- data.table(
+	      "Дата операции" = as.character(NA),
+	      "Время проводки" = as.character(NA),
+	      "Учетный номер" = as.character(NA),
+	      "Счет № статьи расхода" = as.character(NA),
+	      "Период, к которому относятся расходы" = as.character(NA),
+	      "Содержание операции" = as.character(NA),
+	      "Метод учета" = as.character(NA),
+	      "Сальдо начальное" = as.numeric(NA),
+	      "Кредит" = as.numeric(NA),
+	      "Дебет" = as.numeric(NA),
+	      "Счет № (дебет)" = as.character(NA),
+	      "Счет № (кредит)" = as.character(NA),
+	      "Сальдо конечное" = as.numeric(NA),
+	      "Пользователь" = as.character(NA),
+	      stringsAsFactors = FALSE)
+
+	DF_empty_credit_7310_1 <- copy(DF_empty_debit_7310_1)
+
+	# Пустые таблицы для 7310.2
+	DF_empty_debit_7310_2 <- data.table(
+	      "Дата операции" = as.character(NA),
+	      "Время проводки" = as.character(NA),
+	      "Учетный номер" = as.character(NA),
+	      "Счет № статьи расхода" = as.character(NA),
+	      "Период, к которому относятся расходы" = as.character(NA),
+	      "Содержание операции" = as.character(NA),
+	      "Метод учета" = as.character(NA),
+	      "Сальдо начальное" = as.numeric(NA),
+	      "Кредит" = as.numeric(NA),
+	      "Дебет" = as.numeric(NA),
+	      "Счет № (дебет)" = as.character(NA),
+	      "Счет № (кредит)" = as.character(NA),
+	      "Сальдо конечное" = as.numeric(NA),
+	      "Пользователь" = as.character(NA),
+	      stringsAsFactors = FALSE)
+
+	DF_empty_credit_7310_2 <- copy(DF_empty_debit_7310_2)
+
+	# Пустые таблицы для 7320.1
+	DF_empty_debit_7320_1 <- data.table(
+	      "Дата операции" = as.character(NA),
+	      "Время проводки" = as.character(NA),
+	      "Учетный номер" = as.character(NA),
+	      "Счет № статьи расхода" = as.character(NA),
+	      "Период, к которому относятся расходы" = as.character(NA),
+	      "Содержание операции" = as.character(NA),
+	      "Метод учета" = as.character(NA),
+	      "Сальдо начальное" = as.numeric(NA),
+	      "Кредит" = as.numeric(NA),
+	      "Дебет" = as.numeric(NA),
+	      "Счет № (дебет)" = as.character(NA),
+	      "Счет № (кредит)" = as.character(NA),
+	      "Сальдо конечное" = as.numeric(NA),
+	      "Пользователь" = as.character(NA),
+	      stringsAsFactors = FALSE)
+
+	DF_empty_credit_7320_1 <- copy(DF_empty_debit_7320_1)
 
 ui <- fluidPage(
   tags$head(
@@ -2142,7 +3161,7 @@ ui <- fluidPage(
                     fluidRow(
                       column(2, h5("Выберите счет дебета:")),
                       column(2, selectInput("debit_select", label = NULL, 
-                                            choices = c("", "7010_1", "7110_1", "7210_1"), selected = ""))
+                                            choices = c("", "7010_1", "7110_1", "7210_1", "7310.1", "7310.2", "7320.1"), selected = ""))
                     ),
                     div(class = "debit-credit-table",
                       rHandsontableOutput("debit_table")
@@ -2157,7 +3176,7 @@ ui <- fluidPage(
                     fluidRow(
                       column(2, h5("Выберите счет кредита:")),
                       column(2, selectInput("credit_select", label = NULL,
-                                            choices = c("", "7010_1", "7110_1", "7210_1"), selected = ""))
+                                            choices = c("", "7010_1", "7110_1", "7210_1", "7310.1", "7310.2", "7320.1"), selected = ""))
                     ),
                     div(class = "debit-credit-table",
                       rHandsontableOutput("credit_table")
@@ -2519,7 +3538,94 @@ ui <- fluidPage(
               rHandsontableOutput("table7210Item2"),
 	      downloadButton("download_df7210_2", "Загрузить данные"))
 	      )
-	    )
+	    ),
+        tabItem(tabName = "table7310_1",
+          fluidRow(
+            column(
+              width = 12, br(),
+              tags$b("Журнал учета хозопераций: 7310.1.Расходы по финансовым обязательствам, отражаемые в составе прибыли и убытка"),
+	      tags$div(style = "margin-bottom: 20px;"),
+              rHandsontableOutput("table7310.1Item1"),
+              br(),
+              actionButton("save_table7310_1", "Сохранить таблицу 7310.1", icon = icon("save"), class = "btn-save"),
+	      downloadButton("download_df7310.1", "Загрузить данные")
+            ),
+            column(
+              width = 12, br(),
+              tags$b("Выборка данных по дате операции, номеру первичного документа или статье расхода"),
+	      tags$div(style = "margin-bottom: 20px;"),
+              selectInput("choices7310.1", label=NULL,
+                          choices = c(	"Выбор по дате операции", 
+					"Выбор по учетному номеру", 
+					"Выбор по статье расхода", 
+					"Выбор по дате операции и учетному номеру", 
+					"Выбор по дате операции и статье расхода")),
+              uiOutput("nested_ui7310.1")),
+            column(
+              width = 12, br(),
+              label=NULL,
+              rHandsontableOutput("table7310.1Item2"),
+	      downloadButton("download_df7310.1_2", "Загрузить данные"))
+              )
+            ),
+          tabItem(tabName = "table7310_2",
+            fluidRow(
+              column(
+                width = 12, br(),
+                tags$b("Журнал учета хозопераций: 7310.2.Расходы по финансовым обязательствам, отражаемые в Прочем совокупном доходе"),
+	        tags$div(style = "margin-bottom: 20px;"),
+                rHandsontableOutput("table7310.2Item1"),
+                br(),
+                actionButton("save_table7310_2", "Сохранить таблицу 7310.2", icon = icon("save"), class = "btn-save"),
+	        downloadButton("download_df7310.2", "Загрузить данные")
+              ),
+              column(
+                width = 12, br(),
+                tags$b("Выборка данных по дате операции, номеру первичного документа или статье расхода"),
+	        tags$div(style = "margin-bottom: 20px;"),
+                selectInput("choices7310.2", label=NULL,
+                          choices = c(	"Выбор по дате операции", 
+					"Выбор по учетному номеру", 
+					"Выбор по статье расхода", 
+					"Выбор по дате операции и учетному номеру", 
+					"Выбор по дате операции и статье расхода")),
+                uiOutput("nested_ui7310.2")),
+              column(
+                width = 12, br(),
+                label=NULL,
+                rHandsontableOutput("table7310.2Item2"),
+	        downloadButton("download_df7310.2_2", "Загрузить данные"))
+              )
+            ),
+        tabItem(tabName = "table7320_1",
+          fluidRow(
+            column(
+              width = 12, br(),
+              tags$b("Журнал учета хозопераций: 7320.1.Расходы по финансовым обязательствам, отражаемые в составе прибыли и убытка"),
+	      tags$div(style = "margin-bottom: 20px;"),
+              rHandsontableOutput("table7320.1Item1"),
+              br(),
+              actionButton("save_table7320_1", "Сохранить таблицу 7320.1", icon = icon("save"), class = "btn-save"),
+	      downloadButton("download_df7320.1", "Загрузить данные")
+            ),
+            column(
+              width = 12, br(),
+              tags$b("Выборка данных по дате операции, номеру первичного документа или статье расхода"),
+	      tags$div(style = "margin-bottom: 20px;"),
+              selectInput("choices7320.1", label=NULL,
+                          choices = c(	"Выбор по дате операции", 
+					"Выбор по учетному номеру", 
+					"Выбор по статье расхода", 
+					"Выбор по дате операции и учетному номеру", 
+					"Выбор по дате операции и статье расхода")),
+              uiOutput("nested_ui7320.1")),
+            column(
+              width = 12, br(),
+              label=NULL,
+              rHandsontableOutput("table7320.1Item2"),
+	      downloadButton("download_df7320.1_2", "Загрузить данные"))
+              )
+            )
           )
         )
       )
@@ -2563,7 +3669,13 @@ server <- function(input, output, session) {
     df7110_3 = NULL,
     df7210_1 = NULL,
     df7210_2 = NULL,
-    df7210_3 = NULL
+    df7210_3 = NULL,
+    df7310.1 = NULL,
+    df7310.1_2 = NULL,
+    df7310.2 = NULL,
+    df7310.2_2 = NULL,
+    df7320.1 = NULL,
+    df7320.1_2 = NULL
   )
   
   output$show_loading <- reactive({
@@ -2657,6 +3769,12 @@ server <- function(input, output, session) {
 	      r$debit_table_data <- copy(DF7110_1)
 	    } else if (input$debit_select == "7210_1") {
 	      r$debit_table_data <- copy(DF7210_1)
+	    } else if (input$debit_select == "7310.1") {
+	      r$debit_table_data <- copy(DF7310.1)
+	    } else if (input$debit_select == "7310.2") {
+	      r$debit_table_data <- copy(DF7310.2)
+	    } else if (input$debit_select == "7320.1") {
+	      r$debit_table_data <- copy(DF7320.1)
 	    }
 	  })
   
@@ -2671,6 +3789,12 @@ server <- function(input, output, session) {
 	      r$credit_table_data <- copy(DF7110_1)
 	    } else if (input$credit_select == "7210_1") {
 	      r$credit_table_data <- copy(DF7210_1)
+	    } else if (input$credit_select == "7310.1") {
+	      r$credit_table_data <- copy(DF7310.1)
+	    } else if (input$credit_select == "7310.2") {
+	      r$credit_table_data <- copy(DF7310.2)
+	    } else if (input$credit_select == "7320.1") {
+	      r$credit_table_data <- copy(DF7320.1)
 	    }
 	  })
   
@@ -2799,6 +3923,96 @@ server <- function(input, output, session) {
 	  }
 	  return(TRUE)
 	}
+
+        is_table_complete_7310_1 <- function(table_data) {
+          if (is.null(table_data) || nrow(table_data) == 0) {
+            return(FALSE)
+          }
+        
+          required_cols <- c("Дата операции", "Учетный номер", "Счет № статьи расхода",
+                             "Период, к которому относятся расходы", "Содержание операции", "Метод учета",
+                             "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)", "Счет № (кредит)")
+          
+          for (col in required_cols) {
+            if (col %in% names(table_data)) {
+              value <- table_data[[col]][1]
+              if (is.na(value) || (is.character(value) && nchar(trimws(value)) == 0)) {
+                return(FALSE)
+              }
+            }
+          }
+          
+          numeric_cols <- c("Сальдо начальное", "Кредит", "Дебет", "Сальдо конечное")
+          for (col in numeric_cols) {
+            if (col %in% names(table_data)) {
+              value <- table_data[[col]][1]
+              if (!is.numeric(value) || is.na(value)) {
+                return(FALSE)
+              }
+            }
+          }
+          return(TRUE)
+        }
+
+        is_table_complete_7310_2 <- function(table_data) {
+          if (is.null(table_data) || nrow(table_data) == 0) {
+            return(FALSE)
+          }
+        
+          required_cols <- c("Дата операции", "Учетный номер", "Счет № статьи расхода",
+                             "Период, к которому относятся расходы", "Содержание операции", "Метод учета",
+                             "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)", "Счет № (кредит)")
+          
+          for (col in required_cols) {
+            if (col %in% names(table_data)) {
+              value <- table_data[[col]][1]
+              if (is.na(value) || (is.character(value) && nchar(trimws(value)) == 0)) {
+                return(FALSE)
+              }
+            }
+          }
+          
+          numeric_cols <- c("Сальдо начальное", "Кредит", "Дебет", "Сальдо конечное")
+          for (col in numeric_cols) {
+            if (col %in% names(table_data)) {
+              value <- table_data[[col]][1]
+              if (!is.numeric(value) || is.na(value)) {
+                return(FALSE)
+              }
+            }
+          }
+          return(TRUE)
+        }
+
+        is_table_complete_7320_1 <- function(table_data) {
+          if (is.null(table_data) || nrow(table_data) == 0) {
+            return(FALSE)
+          }
+        
+          required_cols <- c("Дата операции", "Учетный номер", "Счет № статьи расхода",
+                             "Период, к которому относятся расходы", "Содержание операции", "Метод учета",
+                             "Сальдо начальное", "Кредит", "Дебет", "Счет № (дебет)", "Счет № (кредит)")
+          
+          for (col in required_cols) {
+            if (col %in% names(table_data)) {
+              value <- table_data[[col]][1]
+              if (is.na(value) || (is.character(value) && nchar(trimws(value)) == 0)) {
+                return(FALSE)
+              }
+            }
+          }
+          
+          numeric_cols <- c("Сальдо начальное", "Кредит", "Дебет", "Сальдо конечное")
+          for (col in numeric_cols) {
+            if (col %in% names(table_data)) {
+              value <- table_data[[col]][1]
+              if (!is.numeric(value) || is.na(value)) {
+                return(FALSE)
+              }
+            }
+          }
+          return(TRUE)
+        }
   
   output$session_selector_ui <- renderUI({
     r$sessions_updated
@@ -2822,15 +4036,19 @@ server <- function(input, output, session) {
 	  observe({
 	    data$df7010_1 <- copy(DF7010_1)
 	    data$df7010_2 <- copy(DF7010_2)
-	    data$df7010_3 <- copy(DF7010_3)
-	
+	    data$df7010_3 <- copy(DF7010_3)	
 	    data$df7110_1 <- copy(DF7110_1)
 	    data$df7110_2 <- copy(DF7110_2)
-	    data$df7110_3 <- copy(DF7110_3)
-	
+	    data$df7110_3 <- copy(DF7110_3)	
 	    data$df7210_1 <- copy(DF7210_1)
 	    data$df7210_2 <- copy(DF7210_2)
 	    data$df7210_3 <- copy(DF7210_3)
+	    data$df7310.1 <- copy(DF7310.1)
+	    data$df7310.1_2 <- copy(DF7310.1_2)
+	    data$df7310.2 <- copy(DF7310.2)
+	    data$df7310.2_2 <- copy(DF7310.2_2)
+	    data$df7320.1 <- copy(DF7320.1)
+	    data$df7320.1_2 <- copy(DF7320.1_2)
 	  })
   
   observe({
@@ -2862,6 +4080,9 @@ server <- function(input, output, session) {
 	loaded_data_7010_1 <- load_merged_session_data("app_data_7010_1", current_session)
 	loaded_data_7110_1 <- load_merged_session_data("app_data_7110_1", current_session)
 	loaded_data_7210_1 <- load_merged_session_data("app_data_7210_1", current_session)
+	loaded_data_7310_1 <- load_merged_session_data("app_data_7310_1", current_session)
+	loaded_data_7310_2 <- load_merged_session_data("app_data_7310_2", current_session)
+	loaded_data_7320_1 <- load_merged_session_data("app_data_7320_1", current_session)
 
 	data$df7010_3 <- copy(DF7010_3)
 	data$df7110_3 <- copy(DF7110_3)
@@ -2878,11 +4099,6 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
 
 	    data$df7010_1 <- temp_data
 	  } else {
@@ -2903,12 +4119,7 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+
 	    data$df7110_1 <- temp_data
 	  } else {
 	    data$df7110_1 <- copy(DF7110_1)
@@ -2929,11 +4140,6 @@ server <- function(input, output, session) {
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
 	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
 	    data$df7210_1 <- temp_data
 	  } else {
 	    data$df7210_1 <- copy(DF7210_1)
@@ -2941,7 +4147,73 @@ server <- function(input, output, session) {
 	} else {
 	  data$df7210_1 <- copy(DF7210_1)
 	}
-    
+
+      # Обработка данных 7310.1
+      if (!is.null(loaded_data_7310_1)) {
+        temp_data <- as.data.table(loaded_data_7310_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период, к которому относятся расходы",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+ 
+          data$df7310.1 <- temp_data
+        } else {
+          data$df7310.1 <- copy(DF7310.1)
+        }
+      } else {
+        data$df7310.1 <- copy(DF7310.1)
+      }
+
+      # Обработка данных 7310.2
+      if (!is.null(loaded_data_7310_2)) {
+        temp_data <- as.data.table(loaded_data_7310_2)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период, к которому относятся расходы",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+ 
+          data$df7310.2 <- temp_data
+        } else {
+          data$df7310.2 <- copy(DF7310.2)
+        }
+      } else {
+        data$df7310.2 <- copy(DF7310.2)
+      }
+
+      # Обработка данных 7320.1
+      if (!is.null(loaded_data_7320_1)) {
+        temp_data <- as.data.table(loaded_data_7320_1)
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период, к которому относятся расходы",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+ 
+          data$df7320.1 <- temp_data
+        } else {
+          data$df7320.1 <- copy(DF7320.1)
+        }
+      } else {
+        data$df7320.1 <- copy(DF7320.1)
+      }
+
       update_info <- get_last_update(current_session)
       if (!is.null(update_info)) {
         r$current_session_last_update <- update_info$timestamp
@@ -2964,7 +4236,10 @@ server <- function(input, output, session) {
 	      df7110_1 = data$df7110_1,
 	      df7110_3 = data$df7110_3,
 	      df7210_1 = data$df7210_1,
-	      df7210_3 = data$df7210_3
+	      df7210_3 = data$df7210_3,
+	      df7310.1 = data$df7310.1,
+	      df7310.2 = data$df7310.2,
+	      df7320.1 = data$df7320.1
 	    ))
 	  })
   
@@ -3020,6 +4295,9 @@ server <- function(input, output, session) {
 	loaded_data_7010_1 <- load_merged_session_data("app_data_7010_1", selected_session)
 	loaded_data_7110_1 <- load_merged_session_data("app_data_7110_1", selected_session)
 	loaded_data_7210_1 <- load_merged_session_data("app_data_7210_1", selected_session)
+	loaded_data_7310_1 <- load_merged_session_data("app_data_7310_1", selected_session)
+	loaded_data_7310_2 <- load_merged_session_data("app_data_7310_2", selected_session)
+	loaded_data_7320_1 <- load_merged_session_data("app_data_7320_1", selected_session)
 
 	data$df7010_3 <- copy(DF7010_3)
 	data$df7110_3 <- copy(DF7110_3)
@@ -3040,11 +4318,6 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
 	    
 	    data$df7010_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7010_1 с ", nrow(temp_data), " rows")
@@ -3071,12 +4344,7 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+
 	    data$df7110_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7110_1 с ", nrow(temp_data), " rows")
 	  } else {
@@ -3102,12 +4370,7 @@ server <- function(input, output, session) {
 	            c("Дата операции", "Время проводки", "Учетный номер", "Содержание операции",
 	              "Метод учета", "Сальдо начальное", "Дебет", "Кредит", 
 	              "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
-	    
-	    if ("Дата операции" %in% names(temp_data)) temp_data[, `Дата операции` := as.character(`Дата операции`)]
-	    if ("Время проводки" %in% names(temp_data)) temp_data[, `Время проводки` := as.character(`Время проводки`)]
-	    if ("Счет № (дебет)" %in% names(temp_data)) temp_data[, `Счет № (дебет)` := as.character(`Счет № (дебет)`)]
-	    if ("Счет № (кредит)" %in% names(temp_data)) temp_data[, `Счет № (кредит)` := as.character(`Счет № (кредит)`)]
-	    
+
 	    data$df7210_1 <- temp_data
 	    message("ОТЛАДКА: успешно обновлен df7210_1 с ", nrow(temp_data), " rows")
 	  } else {
@@ -3118,6 +4381,90 @@ server <- function(input, output, session) {
 	  message("ОТЛАДКА: данные для df7210_1 не загружены")
 	  data$df7210_1 <- copy(DF7210_1)
 	}
+
+      # Обработка данных 7310.1
+      if (!is.null(loaded_data_7310_1)) {
+        temp_data <- as.data.table(loaded_data_7310_1)
+        message("ОТЛАДКА: df7310.1 столбцы: ", paste(names(temp_data), collapse = ", "))
+        
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период, к которому относятся расходы",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+
+          data$df7310.1 <- temp_data
+          message("ОТЛАДКА: успешно обновлен df7310.1 с ", nrow(temp_data), " rows")
+        } else {
+          message("ОТЛАДКА: Несоответствие столбцов в df7310.1.")
+          showNotification("Ошибка: несоответствие столбцов в таблице 7310.1", type = "error")
+        }
+      } else {
+        message("ОТЛАДКА: данные для df7310.1 не загружены")
+        data$df7310.1 <- copy(DF7310.1)
+      }
+
+      # Обработка данных 7310.2
+      if (!is.null(loaded_data_7310_2)) {
+        temp_data <- as.data.table(loaded_data_7310_2)
+        message("ОТЛАДКА: df7310.2 столбцы: ", paste(names(temp_data), collapse = ", "))
+        
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период, к которому относятся расходы",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+
+          data$df7310.2 <- temp_data
+          message("ОТЛАДКА: успешно обновлен df7310.2 с ", nrow(temp_data), " rows")
+        } else {
+          message("ОТЛАДКА: Несоответствие столбцов в df7310.2.")
+          showNotification("Ошибка: несоответствие столбцов в таблице 7310.2", type = "error")
+        }
+      } else {
+        message("ОТЛАДКА: данные для df7310.2 не загружены")
+        data$df7310.2 <- copy(DF7310.2)
+      }
+
+      # Обработка данных 7320.1
+      if (!is.null(loaded_data_7320_1)) {
+        temp_data <- as.data.table(loaded_data_7320_1)
+        message("ОТЛАДКА: df7320.1 столбцы: ", paste(names(temp_data), collapse = ", "))
+        
+        expected_cols <- c("operation_date", "operation_time", "document_number", "expense_account",
+                           "expense_period", "operation_description", "accounting_method",
+                           "initial_balance", "credit", "debit", "correspondence_debit",
+                           "correspondence_credit", "final_balance", "username")
+        
+        if (all(expected_cols %in% names(temp_data))) {
+          setnames(temp_data, expected_cols,
+                   c("Дата операции", "Время проводки", "Учетный номер",
+                     "Счет № статьи расхода", "Период, к которому относятся расходы",
+                     "Содержание операции", "Метод учета", "Сальдо начальное", "Кредит",
+                     "Дебет", "Счет № (дебет)", "Счет № (кредит)", "Сальдо конечное", "Пользователь"))
+
+          data$df7320.1 <- temp_data
+          message("ОТЛАДКА: успешно обновлен df7320.1 с ", nrow(temp_data), " rows")
+        } else {
+          message("ОТЛАДКА: Несоответствие столбцов в df7320.1.")
+          showNotification("Ошибка: несоответствие столбцов в таблице 7320.1", type = "error")
+        }
+      } else {
+        message("ОТЛАДКА: данные для df7320.1 не загружены")
+        data$df7320.1 <- copy(DF7320.1)
+      }
       
       shinyalert("Успех", paste("Данные сессии загружены в текущую сессию:", session_id()), type = "success")
       
@@ -3148,6 +4495,12 @@ server <- function(input, output, session) {
 	      debit_complete <- is_table_complete_7110_1(r$debit_table_data)
 	    } else if (r$debit_account_selected == "7210_1") {
 	      debit_complete <- is_table_complete_7210_1(r$debit_table_data)
+	    } else if (r$debit_account_selected == "7310.1") {
+	      debit_complete <- is_table_complete_7310_1(r$debit_table_data)
+	    } else if (r$debit_account_selected == "7310.2") {
+	      debit_complete <- is_table_complete_7310_2(r$debit_table_data)
+	    } else if (r$debit_account_selected == "7320.1") {
+	      debit_complete <- is_table_complete_7320_1(r$debit_table_data)
 	    }
     
 	    credit_complete <- FALSE
@@ -3157,6 +4510,12 @@ server <- function(input, output, session) {
 	      credit_complete <- is_table_complete_7110_1(r$credit_table_data)
 	    } else if (r$credit_account_selected == "7210_1") {
 	      credit_complete <- is_table_complete_7210_1(r$credit_table_data)
+	    } else if (r$credit_account_selected == "7310.1") {
+	      credit_complete <- is_table_complete_7310_1(r$credit_table_data)
+	    } else if (r$credit_account_selected == "7310.2") {
+	      credit_complete <- is_table_complete_7310_2(r$credit_table_data)
+	    } else if (r$credit_account_selected == "7320.1") {
+	      credit_complete <- is_table_complete_7320_1(r$credit_table_data)
 	    }
    
     if (!debit_complete || !credit_complete) {
@@ -3181,6 +4540,9 @@ server <- function(input, output, session) {
 	if (!is.null(data$df7010_1) && nrow(data$df7010_1) > 0) data$df7010_1 <- unique(data$df7010_1)
 	if (!is.null(data$df7110_1) && nrow(data$df7110_1) > 0) data$df7110_1 <- unique(data$df7110_1)
 	if (!is.null(data$df7210_1) && nrow(data$df7210_1) > 0) data$df7210_1 <- unique(data$df7210_1)
+	if (!is.null(data$df7310.1) && nrow(data$df7310.1) > 0) data$df7310.1 <- unique(data$df7310.1)
+	if (!is.null(data$df7310.2) && nrow(data$df7310.2) > 0) data$df7310.2 <- unique(data$df7310.2)
+	if (!is.null(data$df7320.1) && nrow(data$df7320.1) > 0) data$df7320.1 <- unique(data$df7320.1)
 
 	# Обработка дебета
 	if (r$debit_account_selected == "7010_1") {
@@ -3246,7 +4608,70 @@ server <- function(input, output, session) {
 	      data$df7210_1 <- debit_row
 	    }
 	  }
-	}
+	} else if (r$debit_account_selected == "7310.1") {
+          if (!is.null(data$df7310.1)) {
+            debit_row <- copy(r$debit_table_data)
+            debit_row[, `Сальдо конечное` := `Сальдо начальное` - `Кредит` + `Дебет`]
+            debit_row[, Пользователь := r$current_user]
+          
+            if (nrow(data$df7310.1) > 0) {
+              is_duplicate <- any(sapply(1:nrow(data$df7310.1), function(i) {
+                all(as.character(debit_row[1, ]) == as.character(data$df7310.1[i, ]), na.rm = TRUE)
+              }))
+            
+              if (!is_duplicate) {
+                data$df7310.1 <- rbindlist(list(data$df7310.1, debit_row), use.names = TRUE, fill = TRUE)
+                message("Добавлена новая строка в df7310.1 из таблицы Дебет")
+              } else {
+                message("Строка уже существует в df7310.1, не добавляем дубликат")
+              }
+          } else {
+            data$df7310.1 <- debit_row
+          }
+        }
+      } else if (r$debit_account_selected == "7310.2") {
+          if (!is.null(data$df7310.2)) {
+            debit_row <- copy(r$debit_table_data)
+            debit_row[, `Сальдо конечное` := `Сальдо начальное` - `Кредит` + `Дебет`]
+            debit_row[, Пользователь := r$current_user]
+          
+            if (nrow(data$df7310.2) > 0) {
+              is_duplicate <- any(sapply(1:nrow(data$df7310.2), function(i) {
+                all(as.character(debit_row[1, ]) == as.character(data$df7310.2[i, ]), na.rm = TRUE)
+              }))
+            
+              if (!is_duplicate) {
+                data$df7310.2 <- rbindlist(list(data$df7310.2, debit_row), use.names = TRUE, fill = TRUE)
+                message("Добавлена новая строка в df7310.2 из таблицы Дебет")
+              } else {
+                message("Строка уже существует в df7310.2, не добавляем дубликат")
+              }
+          } else {
+            data$df7310.2 <- debit_row
+          }
+        }
+      } else if (r$debit_account_selected == "7320.1") {
+          if (!is.null(data$df7320.1)) {
+            debit_row <- copy(r$debit_table_data)
+            debit_row[, `Сальдо конечное` := `Сальдо начальное` - `Кредит` + `Дебет`]
+            debit_row[, Пользователь := r$current_user]
+          
+            if (nrow(data$df7320.1) > 0) {
+              is_duplicate <- any(sapply(1:nrow(data$df7320.1), function(i) {
+                all(as.character(debit_row[1, ]) == as.character(data$df7320.1[i, ]), na.rm = TRUE)
+              }))
+            
+              if (!is_duplicate) {
+                data$df7320.1 <- rbindlist(list(data$df7320.1, debit_row), use.names = TRUE, fill = TRUE)
+                message("Добавлена новая строка в df7320.1 из таблицы Дебет")
+              } else {
+                message("Строка уже существует в df7320.1, не добавляем дубликат")
+              }
+          } else {
+            data$df7320.1 <- debit_row
+          }
+        }
+      }
 
   	# Обработка кредита
 	if (r$credit_account_selected == "7010_1") {
@@ -3312,7 +4737,70 @@ server <- function(input, output, session) {
 	      data$df7210_1 <- credit_row
 	    }
 	  }
-	}
+	} else if (r$credit_account_selected == "7310.1") {
+          if (!is.null(data$df7310.1)) {
+            credit_row <- copy(r$credit_table_data)
+            credit_row[, `Сальдо конечное` := `Сальдо начальное` - `Кредит` + `Дебет`]
+            credit_row[, Пользователь := r$current_user]
+          
+          if (nrow(data$df7310.1) > 0) {
+            is_duplicate <- any(sapply(1:nrow(data$df7310.1), function(i) {
+              all(as.character(credit_row[1, ]) == as.character(data$df7310.1[i, ]), na.rm = TRUE)
+            }))
+            
+            if (!is_duplicate) {
+              data$df7310.1 <- rbindlist(list(data$df7310.1, credit_row), use.names = TRUE, fill = TRUE)
+              message("Добавлена новая строка в df7310.1 из таблицы Дебет")
+            } else {
+              message("Строка уже существует в df7310.1, не добавляем дубликат")
+            }
+          } else {
+            data$df7310.1 <- credit_row
+          }
+        }
+      } else if (r$credit_account_selected == "7310.2") {
+          if (!is.null(data$df7310.2)) {
+            credit_row <- copy(r$credit_table_data)
+            credit_row[, `Сальдо конечное` := `Сальдо начальное` - `Кредит` + `Дебет`]
+            credit_row[, Пользователь := r$current_user]
+          
+          if (nrow(data$df7310.2) > 0) {
+            is_duplicate <- any(sapply(1:nrow(data$df7310.2), function(i) {
+              all(as.character(credit_row[1, ]) == as.character(data$df7310.2[i, ]), na.rm = TRUE)
+            }))
+            
+            if (!is_duplicate) {
+              data$df7310.2 <- rbindlist(list(data$df7310.2, credit_row), use.names = TRUE, fill = TRUE)
+              message("Добавлена новая строка в df7310.2 из таблицы Дебет")
+            } else {
+              message("Строка уже существует в df7310.2, не добавляем дубликат")
+            }
+          } else {
+            data$df7310.2 <- credit_row
+          }
+        }
+      } else if (r$credit_account_selected == "7320.1") {
+          if (!is.null(data$df7320.1)) {
+            credit_row <- copy(r$credit_table_data)
+            credit_row[, `Сальдо конечное` := `Сальдо начальное` - `Кредит` + `Дебет`]
+            credit_row[, Пользователь := r$current_user]
+          
+          if (nrow(data$df7320.1) > 0) {
+            is_duplicate <- any(sapply(1:nrow(data$df7320.1), function(i) {
+              all(as.character(credit_row[1, ]) == as.character(data$df7320.1[i, ]), na.rm = TRUE)
+            }))
+            
+            if (!is_duplicate) {
+              data$df7320.1 <- rbindlist(list(data$df7320.1, credit_row), use.names = TRUE, fill = TRUE)
+              message("Добавлена новая строка в df7320.1 из таблицы Дебет")
+            } else {
+              message("Строка уже существует в df7320.1, не добавляем дубликат")
+            }
+          } else {
+            data$df7320.1 <- credit_row
+          }
+        }
+      }
     
     # Удаляем дубликаты еще раз после добавления новых строк
 
@@ -3326,6 +4814,18 @@ server <- function(input, output, session) {
 
     if (!is.null(data$df7210_1) && nrow(data$df7210_1) > 0) {
       data$df7210_1 <- unique(data$df7210_1)
+    }
+
+    if (!is.null(data$df7310.1) && nrow(data$df7310.1) > 0) {
+      data$df7310.1 <- unique(data$df7310.1)
+    }
+
+    if (!is.null(data$df7310.2) && nrow(data$df7310.2) > 0) {
+      data$df7310.2 <- unique(data$df7310.2)
+    }
+
+    if (!is.null(data$df7320.1) && nrow(data$df7320.1) > 0) {
+      data$df7320.1 <- unique(data$df7320.1)
     }
    
     # Сохранение данных
@@ -3354,6 +4854,31 @@ server <- function(input, output, session) {
       }
     }
 
+    if (!is.null(data$df7310.1)) {
+      success <- save_data_simple(data$df7310.1, "app_data_7310_1", current_session, r$current_user)
+      if (!success) {
+        save_success <- FALSE
+        error_messages <- c(error_messages, "Ошибка сохранения таблицы 7310.1")
+      }
+    }
+
+    if (!is.null(data$df7310.2)) {
+      success <- save_data_simple(data$df7310.2, "app_data_7310_2", current_session, r$current_user)
+      if (!success) {
+        save_success <- FALSE
+        error_messages <- c(error_messages, "Ошибка сохранения таблицы 7310.2")
+      }
+    }
+
+
+    if (!is.null(data$df7320.1)) {
+      success <- save_data_simple(data$df7320.1, "app_data_7320_1", current_session, r$current_user)
+      if (!success) {
+        save_success <- FALSE
+        error_messages <- c(error_messages, "Ошибка сохранения таблицы 7320.1")
+      }
+    }
+
     if (save_success) {
       r$data_version <- r$data_version + 1
       update_info <- get_last_update(current_session)
@@ -3368,6 +4893,12 @@ server <- function(input, output, session) {
 	  r$debit_table_data <- DF_empty_debit_7110
 	} else if (r$debit_account_selected == "7210_1") {
 	  r$debit_table_data <- DF_empty_debit_7210
+	} else if (r$debit_account_selected == "7310.1") {
+	  r$debit_table_data <- DF_empty_debit_7310_1
+	} else if (r$debit_account_selected == "7310.2") {
+	  r$debit_table_data <- DF_empty_debit_7310_2
+	} else if (r$debit_account_selected == "7320.1") {
+	  r$debit_table_data <- DF_empty_debit_7320_1
 	} else {
 	  r$debit_table_data <- DF_empty_debit
 	}
@@ -3378,6 +4909,12 @@ server <- function(input, output, session) {
 	  r$credit_table_data <- DF_empty_credit_7110
 	} else if (r$credit_account_selected == "7210_1") {
 	  r$credit_table_data <- DF_empty_credit_7210
+	} else if (r$credit_account_selected == "7310.1") {
+	  r$credit_table_data <- DF_empty_credit_7310_1
+	} else if (r$credit_account_selected == "7310.2") {
+	  r$credit_table_data <- DF_empty_credit_7310_2
+	} else if (r$credit_account_selected == "7320.1") {
+	  r$credit_table_data <- DF_empty_credit_7320_1
 	} else {
 	  r$credit_table_data <- DF_empty_credit
 	}
@@ -3430,9 +4967,6 @@ server <- function(input, output, session) {
 	  # Filter to keep only rows belonging to the current user
 	  user_df <- data$df7010_1[data$df7010_1$Пользователь == r$current_user, ]
 	  
-	  # If the user has no rows, it saves an empty data frame (which will delete all their rows)
-	  # This handles the case where the user deleted all rows they owned
-	  
 	  # Save using the per‑user function (deletes only this user's rows, then inserts their current rows)
 	  success <- save_data_simple(user_df, "app_data_7010_1", current_session, r$current_user)
 	  
@@ -3482,10 +5016,7 @@ server <- function(input, output, session) {
 	  
 	  # Filter to keep only rows belonging to the current user
 	  user_df <- data$df7110_1[data$df7110_1$Пользователь == r$current_user, ]
-	  
-	  # If the user has no rows, it saves an empty data frame (which will delete all their rows)
-	  # This handles the case where the user deleted all rows they owned
-	  
+  
 	  # Save using the per‑user function (deletes only this user's rows, then inserts their current rows)
 	  success <- save_data_simple(user_df, "app_data_7110_1", current_session, r$current_user)
 	  
@@ -3535,10 +5066,7 @@ server <- function(input, output, session) {
 	  
 	  # Filter to keep only rows belonging to the current user
 	  user_df <- data$df7210_1[data$df7210_1$Пользователь == r$current_user, ]
-	  
-	  # If the user has no rows, it saves an empty data frame (which will delete all their rows)
-	  # This handles the case where the user deleted all rows they owned
-	  
+
 	  # Save using the per‑user function (deletes only this user's rows, then inserts their current rows)
 	  success <- save_data_simple(user_df, "app_data_7210_1", current_session, r$current_user)
 	  
@@ -3555,6 +5083,135 @@ server <- function(input, output, session) {
 	    shinyalert("Ошибка", "Не удалось сохранить данные таблицы 7210_1.", type = "error")
 	  }
 	})
+
+      # Обработчик сохранения таблицы 7310.1
+      observeEvent(input$save_table7310_1, {
+        if (!r$user_authenticated) {
+          shinyalert("Ошибка", "Для сохранения необходимо авторизоваться.", type = "error")
+          return()
+        }
+        
+        if (!r$db_initialized) {
+          shinyalert("Ошибка", "База данных недоступна. Невозможно сохранить таблицу.", type = "error")
+          return()
+        }
+        
+        current_session <- session_id()
+        
+        if (!is.null(input$table7310.1Item1)) {
+          tryCatch({
+            new_df <- hot_to_r(input$table7310.1Item1)
+            validation_result <- validate_operation_dates(new_df)
+            if (!validation_result$valid) {
+              data$df7310.1 <- validation_result$df
+            } else {
+              data$df7310.1 <- new_df
+            }
+          }, error = function(e) {
+            message("Ошибка при обновлении данных из таблицы 7310.1: ", e$message)
+          })
+        }
+        
+        user_df <- data$df7310.1[data$df7310.1$Пользователь == r$current_user, ]
+        success <- save_data_simple(user_df, "app_data_7310_1", current_session, r$current_user)
+        
+        if (success) {
+          shinyalert("Успех", paste("Данные таблицы 7310.1 сохранены для пользователя", r$current_user), type = "success")
+          r$data_version <- r$data_version + 1
+          update_info <- get_last_update(current_session)
+          if (!is.null(update_info)) {
+            r$current_session_last_update <- update_info$timestamp
+          }
+        } else {
+          shinyalert("Ошибка", "Не удалось сохранить данные таблицы 7310.1.", type = "error")
+        }
+      })
+
+      # Обработчик сохранения таблицы 7310.2
+      observeEvent(input$save_table7310_2, {
+        if (!r$user_authenticated) {
+          shinyalert("Ошибка", "Для сохранения необходимо авторизоваться.", type = "error")
+          return()
+        }
+        
+        if (!r$db_initialized) {
+          shinyalert("Ошибка", "База данных недоступна. Невозможно сохранить таблицу.", type = "error")
+          return()
+        }
+        
+        current_session <- session_id()
+        
+        if (!is.null(input$table7310.2Item1)) {
+          tryCatch({
+            new_df <- hot_to_r(input$table7310.2Item1)
+            validation_result <- validate_operation_dates(new_df)
+            if (!validation_result$valid) {
+              data$df7310.2 <- validation_result$df
+            } else {
+              data$df7310.2 <- new_df
+            }
+          }, error = function(e) {
+            message("Ошибка при обновлении данных из таблицы 7310.2: ", e$message)
+          })
+        }
+        
+        user_df <- data$df7310.2[data$df7310.2$Пользователь == r$current_user, ]
+        success <- save_data_simple(user_df, "app_data_7310_2", current_session, r$current_user)
+        
+        if (success) {
+          shinyalert("Успех", paste("Данные таблицы 7310.2 сохранены для пользователя", r$current_user), type = "success")
+          r$data_version <- r$data_version + 1
+          update_info <- get_last_update(current_session)
+          if (!is.null(update_info)) {
+            r$current_session_last_update <- update_info$timestamp
+          }
+        } else {
+          shinyalert("Ошибка", "Не удалось сохранить данные таблицы 7310.2.", type = "error")
+        }
+      })
+
+      # Обработчик сохранения таблицы 7320.1
+      observeEvent(input$save_table7320_1, {
+        if (!r$user_authenticated) {
+          shinyalert("Ошибка", "Для сохранения необходимо авторизоваться.", type = "error")
+          return()
+        }
+        
+        if (!r$db_initialized) {
+          shinyalert("Ошибка", "База данных недоступна. Невозможно сохранить таблицу.", type = "error")
+          return()
+        }
+        
+        current_session <- session_id()
+        
+        if (!is.null(input$table7320.1Item1)) {
+          tryCatch({
+            new_df <- hot_to_r(input$table7320.1Item1)
+            validation_result <- validate_operation_dates(new_df)
+            if (!validation_result$valid) {
+              data$df7320.1 <- validation_result$df
+            } else {
+              data$df7320.1 <- new_df
+            }
+          }, error = function(e) {
+            message("Ошибка при обновлении данных из таблицы 7320.1: ", e$message)
+          })
+        }
+        
+        user_df <- data$df7320.1[data$df7320.1$Пользователь == r$current_user, ]
+        success <- save_data_simple(user_df, "app_data_7320_1", current_session, r$current_user)
+        
+        if (success) {
+          shinyalert("Успех", paste("Данные таблицы 7320.1 сохранены для пользователя", r$current_user), type = "success")
+          r$data_version <- r$data_version + 1
+          update_info <- get_last_update(current_session)
+          if (!is.null(update_info)) {
+            r$current_session_last_update <- update_info$timestamp
+          }
+        } else {
+          shinyalert("Ошибка", "Не удалось сохранить данные таблицы 7320.1.", type = "error")
+        }
+      })
   
   observeEvent(input$test_connection, {
     if (test_database_connection()) {
@@ -3653,6 +5310,57 @@ server <- function(input, output, session) {
 	    }
 	  }
 	})
+
+    observe({
+        if(!is.null(input$table7310.1Item1)) {
+            if (!r$user_authenticated) {
+                shinyalert("Ошибка", "Для внесения изменений необходимо авторизоваться.", type = "error")
+                return()
+            }
+            
+            new_df <- hot_to_r(input$table7310.1Item1)
+            validation_result <- validate_operation_dates(new_df)
+            if (!validation_result$valid) {
+                data$df7310.1 <- validation_result$df
+            } else {
+                data$df7310.1 <- new_df
+            }
+        }
+    })
+
+    observe({
+        if(!is.null(input$table7310.2Item1)) {
+            if (!r$user_authenticated) {
+                shinyalert("Ошибка", "Для внесения изменений необходимо авторизоваться.", type = "error")
+                return()
+            }
+            
+            new_df <- hot_to_r(input$table7310.2Item1)
+            validation_result <- validate_operation_dates(new_df)
+            if (!validation_result$valid) {
+                data$df7310.2 <- validation_result$df
+            } else {
+                data$df7310.2 <- new_df
+            }
+        }
+    })
+
+    observe({
+        if(!is.null(input$table7320.1Item1)) {
+            if (!r$user_authenticated) {
+                shinyalert("Ошибка", "Для внесения изменений необходимо авторизоваться.", type = "error")
+                return()
+            }
+            
+            new_df <- hot_to_r(input$table7320.1Item1)
+            validation_result <- validate_operation_dates(new_df)
+            if (!validation_result$valid) {
+                data$df7320.1 <- validation_result$df
+            } else {
+                data$df7320.1 <- new_df
+            }
+        }
+    })
 
 #*********
 
@@ -4210,6 +5918,363 @@ observeEvent(input$dates7210, {
     filename = function() { "df7210_2.xlsx" },
     content = function(file) { write.xlsx(data$df7210_2, file) })
 
+	#***********
+
+	#7310.1
+
+	observeEvent(input$dates7310.1, {
+	    start <- ymd(input$dates7310.1[[1]])
+	    end <- ymd(input$dates7310.1[[2]])
+
+	 tryCatch({  
+	  if (start > end) {
+	    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+	    updateDateRangeInput(
+	      session, 
+	      "dates7310.1", 
+	        start = r$start,
+	        end = r$end
+	      )
+	    } else {
+	      r$start <- input$dates7310.1[[1]]
+	      r$end <- input$dates7310.1[[2]]
+	    }
+	   }, error = function(e) {
+	      updateDateRangeInput(session,
+	                           "dates7310.1",
+	                           start = ymd(Sys.Date()),
+	                           end = ymd(Sys.Date()))
+	      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+	                 type = "error")
+	    })
+	}, ignoreInit = TRUE)
+
+	  observe({ 
+	    if (!is.null(input$table7310.1Item1)) {
+	      if (!r$user_authenticated) {
+	        update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
+	        return()
+	      }
+	      
+	      data$df7310.1 <- hot_to_r(input$table7310.1Item1)
+
+	    if (!any(is.na(input$dates7310.1)) && input$choices7310.1 == "Выбор по дате операции") {
+	     	from=as.Date(input$dates7310.1[1L])
+	      	to=as.Date(input$dates7310.1[2L])
+	      	if (from>to) to = from
+	      	selectdates7310.1_1 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7310.1_2 <- data$df7310.1[as.Date(data$df7310.1$"Дата операции") %in% selectdates7310.1_1, ]
+	    } else if (!is.null(input$text) && input$choices7310.1 == "Выбор по учетному номеру") {
+	      	data$df7310.1_2 <- data$df7310.1[data$df7310.1$"Учетный номер" == input$text, ]
+	    } else if (!is.null(input$text) && input$choices7310.1 == "Выбор по статье расхода") {
+	      	data$df7310.1_2 <- data$df7310.1[data$df7310.1$"Счет № статьи расхода" == input$text, ]
+	    } else if (!is.null(input$dates7310.1) && !any(is.na(input$dates7310.1)) && !is.null(input$text) && input$choices7310.1 == "Выбор по дате операции и учетному номеру") {
+	     	from=as.Date(input$dates7310.1[1L])
+	      	to=as.Date(input$dates7310.1[2L])
+	      	if (from>to) to = from
+	      	selectdates7310.1_2 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7310.1_2 <- data$df7310.1[as.Date(data$df7310.1$"Дата операции") %in% selectdates7310.1_2 & data$df7310.1$"Учетный номер" == input$text, ]
+	    } else if (!is.null(input$dates7310.1) && !any(is.na(input$dates7310.1)) && !is.null(input$text) && input$choices7310.1 == "Выбор по дате операции и статье расхода") {
+	     	from=as.Date(input$dates7310.1[1L])
+	      	to=as.Date(input$dates7310.1[2L])
+	      	if (from>to) to = from
+	      	selectdates7310.1_3 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7310.1_2 <- data$df7310.1[as.Date(data$df7310.1$"Дата операции") %in% selectdates7310.1_3 & data$df7310.1$"Счет № статьи расхода" == input$text, ]
+	    } else {
+	        selectdates7310.1_4 <- unique(data$df7310.1$"Дата операции")
+	        data$df7310.1_2 <- data$df7310.1[data$df7310.1$"Дата операции" %in% selectdates7310.1_4, ]
+	    }
+	}
+	})
+
+	  output$table7310.1Item1 <- renderRHandsontable({
+	    
+	   data$df7310.1[, `Сальдо конечное` := data$df7310.1[[8]] - data$df7310.1[[9]] + data$df7310.1[[10]]]
+
+	    rhandsontable(data$df7310.1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
+			manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
+	      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+	  })
+	  
+	  output$nested_ui7310.1 <- renderUI({
+	    if (input$choices7310.1 == "Выбор по дате операции") {
+	      	dateRangeInput("dates7310.1", "Выберите период времени:", format="yyyy-mm-dd",
+	                     start = Sys.Date(), end = Sys.Date(), separator = "-")
+	    } else if (input$choices7310.1 == "Выбор по учетному номеру") {
+	      	textInput("text", "Укажите учетный номер:")
+	    } else if (input$choices7310.1 == "Выбор по статье расхода") {
+	      	textInput("text", "Укажите Счет № статьи расхода:")
+	    } else if (input$choices7310.1 == "Выбор по дате операции и учетному номеру") {
+	      fluidRow(
+	       	dateRangeInput("dates7310.1", "Выберите период времени:",
+	                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+	        textInput("text", "Укажите учетный номер:")
+	      )
+	    } else if (input$choices7310.1 == "Выбор по дате операции и статье расхода") {
+	      fluidRow(
+	       	dateRangeInput("dates7310.1", "Выберите период времени:",
+	                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+	        textInput("text", "Укажите Счет № статьи расхода:")
+	      )
+	    }
+	  })
+
+	  output$table7310.1Item2 <- renderRHandsontable({
+	    rhandsontable(data$df7310.1_2, colWidths = 150, height = 500, readOnly=TRUE, contextMenu = FALSE,
+			manualColumnResize = TRUE, dragColumns = FALSE) |>
+	      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+	  })
+
+	  output$download_df7310.1 <- downloadHandler(
+	    filename = function() { "df7310.1.xlsx" },
+	    content = function(file) {
+	      write.xlsx(data$df7310.1, file)
+	  })
+
+	  output$download_df7310.1_2 <- downloadHandler(
+	    filename = function() { "df7310.1_2.xlsx" },
+	    content = function(file) {
+	      write.xlsx(data$df7310.1_2, file)
+	  })
+
+	#********
+
+	#7310.2
+
+	observeEvent(input$dates7310.2, {
+	    start <- ymd(input$dates7310.2[[1]])
+	    end <- ymd(input$dates7310.2[[2]])
+
+	 tryCatch({  
+	  if (start > end) {
+	    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+	    updateDateRangeInput(
+	      session, 
+	      "dates7310.2", 
+	        start = r$start,
+	        end = r$end
+	      )
+	    } else {
+	      r$start <- input$dates7310.2[[1]]
+	      r$end <- input$dates7310.2[[2]]
+	    }
+	   }, error = function(e) {
+	      updateDateRangeInput(session,
+	                           "dates7310.2",
+	                           start = ymd(Sys.Date()),
+	                           end = ymd(Sys.Date()))
+	      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+	                 type = "error")
+	    })
+	}, ignoreInit = TRUE)
+
+	  observe({ 
+	    if (!is.null(input$table7310.2Item1)) {
+	      if (!r$user_authenticated) {
+	        update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
+	        return()
+	      }
+	      
+	      data$df7310.2 <- hot_to_r(input$table7310.2Item1)
+
+	    if (!any(is.na(input$dates7310.2)) && input$choices7310.2 == "Выбор по дате операции") {
+	     	from=as.Date(input$dates7310.2[1L])
+	      	to=as.Date(input$dates7310.2[2L])
+	      	if (from>to) to = from
+	      	selectdates7310.2_1 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7310.2_2 <- data$df7310.2[as.Date(data$df7310.2$"Дата операции") %in% selectdates7310.2_1, ]
+	    } else if (!is.null(input$text) && input$choices7310.2 == "Выбор по учетному номеру") {
+	      	data$df7310.2_2 <- data$df7310.2[data$df7310.2$"Учетный номер" == input$text, ]
+	    } else if (!is.null(input$text) && input$choices7310.2 == "Выбор по статье расхода") {
+	      	data$df7310.2_2 <- data$df7310.2[data$df7310.2$"Счет № статьи расхода" == input$text, ]
+	    } else if (!is.null(input$dates7310.2) && !any(is.na(input$dates7310.2)) && !is.null(input$text) && input$choices7310.2 == "Выбор по дате операции и учетному номеру") {
+	     	from=as.Date(input$dates7310.2[1L])
+	      	to=as.Date(input$dates7310.2[2L])
+	      	if (from>to) to = from
+	      	selectdates7310.2_2 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7310.2_2 <- data$df7310.2[as.Date(data$df7310.2$"Дата операции") %in% selectdates7310.2_2 & data$df7310.2$"Учетный номер" == input$text, ]
+	    } else if (!is.null(input$dates7310.2) && !any(is.na(input$dates7310.2)) && !is.null(input$text) && input$choices7310.2 == "Выбор по дате операции и статье расхода") {
+	     	from=as.Date(input$dates7310.2[1L])
+	      	to=as.Date(input$dates7310.2[2L])
+	      	if (from>to) to = from
+	      	selectdates7310.2_3 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7310.2_2 <- data$df7310.2[as.Date(data$df7310.2$"Дата операции") %in% selectdates7310.2_3 & data$df7310.2$"Счет № статьи расхода" == input$text, ]
+	    } else {
+	        selectdates7310.2_4 <- unique(data$df7310.2$"Дата операции")
+	        data$df7310.2_2 <- data$df7310.2[data$df7310.2$"Дата операции" %in% selectdates7310.2_4, ]
+	    }
+	}
+	})
+
+	  output$table7310.2Item1 <- renderRHandsontable({
+	    
+	   data$df7310.2[, `Сальдо конечное` := data$df7310.2[[8]] - data$df7310.2[[9]] + data$df7310.2[[10]]]
+
+	    rhandsontable(data$df7310.2, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
+			manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
+	      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+	  })
+	  
+	  output$nested_ui7310.2 <- renderUI({
+	    if (input$choices7310.2 == "Выбор по дате операции") {
+	      	dateRangeInput("dates7310.2", "Выберите период времени:", format="yyyy-mm-dd",
+	                     start = Sys.Date(), end = Sys.Date(), separator = "-")
+	    } else if (input$choices7310.2 == "Выбор по учетному номеру") {
+	      	textInput("text", "Укажите учетный номер:")
+	    } else if (input$choices7310.2 == "Выбор по статье расхода") {
+	      	textInput("text", "Укажите Счет № статьи расхода:")
+	    } else if (input$choices7310.2 == "Выбор по дате операции и учетному номеру") {
+	      fluidRow(
+	       	dateRangeInput("dates7310.2", "Выберите период времени:",
+	                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+	        textInput("text", "Укажите учетный номер:")
+	      )
+	    } else if (input$choices7310.2 == "Выбор по дате операции и статье расхода") {
+	      fluidRow(
+	       	dateRangeInput("dates7310.2", "Выберите период времени:",
+	                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+	        textInput("text", "Укажите Счет № статьи расхода:")
+	      )
+	    }
+	  })
+
+	  output$table7310.2Item2 <- renderRHandsontable({
+	    rhandsontable(data$df7310.2_2, colWidths = 150, height = 500, readOnly=TRUE, contextMenu = FALSE,
+			manualColumnResize = TRUE, dragColumns = FALSE) |>
+	      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+	  })
+
+	  output$download_df7310.2 <- downloadHandler(
+	    filename = function() { "df7310.2.xlsx" },
+	    content = function(file) {
+	      write.xlsx(data$df7310.2, file)
+	  })
+
+	  output$download_df7310.2_2 <- downloadHandler(
+	    filename = function() { "df7310.2_2.xlsx" },
+	    content = function(file) {
+	      write.xlsx(data$df7310.2_2, file)
+	  })
+
+	#***********
+
+	#7320.1
+
+	observeEvent(input$dates7320.1, {
+	    start <- ymd(input$dates7320.1[[1]])
+	    end <- ymd(input$dates7320.1[[2]])
+
+	 tryCatch({  
+	  if (start > end) {
+	    shinyalert("Ошибка при вводе: конечная дата предшествует начальной дате", type = "error")
+	    updateDateRangeInput(
+	      session, 
+	      "dates7320.1", 
+	        start = r$start,
+	        end = r$end
+	      )
+	    } else {
+	      r$start <- input$dates7320.1[[1]]
+	      r$end <- input$dates7320.1[[2]]
+	    }
+	   }, error = function(e) {
+	      updateDateRangeInput(session,
+	                           "dates7320.1",
+	                           start = ymd(Sys.Date()),
+	                           end = ymd(Sys.Date()))
+	      shinyalert("Диапазон дат не может быть пустым! Переход на текущую дату.",
+	                 type = "error")
+	    })
+	}, ignoreInit = TRUE)
+
+	  observe({ 
+	    if (!is.null(input$table7320.1Item1)) {
+	      if (!r$user_authenticated) {
+	        update_auth_status("Для внесения изменений необходимо авторизоваться!", "warning")
+	        return()
+	      }
+	      
+	      data$df7320.1 <- hot_to_r(input$table7320.1Item1)
+
+	    if (!any(is.na(input$dates7320.1)) && input$choices7320.1 == "Выбор по дате операции") {
+	     	from=as.Date(input$dates7320.1[1L])
+	      	to=as.Date(input$dates7320.1[2L])
+	      	if (from>to) to = from
+	      	selectdates7320.1_1 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7320.1_2 <- data$df7320.1[as.Date(data$df7320.1$"Дата операции") %in% selectdates7320.1_1, ]
+	    } else if (!is.null(input$text) && input$choices7320.1 == "Выбор по учетному номеру") {
+	      	data$df7320.1_2 <- data$df7320.1[data$df7320.1$"Учетный номер" == input$text, ]
+	    } else if (!is.null(input$text) && input$choices7320.1 == "Выбор по статье расхода") {
+	      	data$df7320.1_2 <- data$df7320.1[data$df7320.1$"Счет № статьи расхода" == input$text, ]
+	    } else if (!is.null(input$dates7320.1) && !any(is.na(input$dates7320.1)) && !is.null(input$text) && input$choices7320.1 == "Выбор по дате операции и учетному номеру") {
+	     	from=as.Date(input$dates7320.1[1L])
+	      	to=as.Date(input$dates7320.1[2L])
+	      	if (from>to) to = from
+	      	selectdates7320.1_2 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7320.1_2 <- data$df7320.1[as.Date(data$df7320.1$"Дата операции") %in% selectdates7320.1_2 & data$df7320.1$"Учетный номер" == input$text, ]
+	    } else if (!is.null(input$dates7320.1) && !any(is.na(input$dates7320.1)) && !is.null(input$text) && input$choices7320.1 == "Выбор по дате операции и статье расхода") {
+	     	from=as.Date(input$dates7320.1[1L])
+	      	to=as.Date(input$dates7320.1[2L])
+	      	if (from>to) to = from
+	      	selectdates7320.1_3 <- seq.Date(from=from, to=to, by = "day")
+	      	data$df7320.1_2 <- data$df7320.1[as.Date(data$df7320.1$"Дата операции") %in% selectdates7320.1_3 & data$df7320.1$"Счет № статьи расхода" == input$text, ]
+	    } else {
+	        selectdates7320.1_4 <- unique(data$df7320.1$"Дата операции")
+	        data$df7320.1_2 <- data$df7320.1[data$df7320.1$"Дата операции" %in% selectdates7320.1_4, ]
+	    }
+	}
+	})
+
+	  output$table7320.1Item1 <- renderRHandsontable({
+	    
+	   data$df7320.1[, `Сальдо конечное` := data$df7320.1[[8]] - data$df7320.1[[9]] + data$df7320.1[[10]]]
+
+	    rhandsontable(data$df7320.1, colWidths = 150, height = 500, allowInvalid=FALSE, fixedColumnsLeft = 2, 
+			manualColumnResize = TRUE, language = 'ru-RU', dragColumns = FALSE) |>
+	      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+	  })
+	  
+	  output$nested_ui7320.1 <- renderUI({
+	    if (input$choices7320.1 == "Выбор по дате операции") {
+	      	dateRangeInput("dates7320.1", "Выберите период времени:", format="yyyy-mm-dd",
+	                     start = Sys.Date(), end = Sys.Date(), separator = "-")
+	    } else if (input$choices7320.1 == "Выбор по учетному номеру") {
+	      	textInput("text", "Укажите учетный номер:")
+	    } else if (input$choices7320.1 == "Выбор по статье расхода") {
+	      	textInput("text", "Укажите Счет № статьи расхода:")
+	    } else if (input$choices7320.1 == "Выбор по дате операции и учетному номеру") {
+	      fluidRow(
+	       	dateRangeInput("dates7320.1", "Выберите период времени:",
+	                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+	        textInput("text", "Укажите учетный номер:")
+	      )
+	    } else if (input$choices7320.1 == "Выбор по дате операции и статье расхода") {
+	      fluidRow(
+	       	dateRangeInput("dates7320.1", "Выберите период времени:",
+	                       start = Sys.Date(), end = Sys.Date(), separator = "-"),
+	        textInput("text", "Укажите Счет № статьи расхода:")
+	      )
+	    }
+	  })
+
+	  output$table7320.1Item2 <- renderRHandsontable({
+	    rhandsontable(data$df7320.1_2, colWidths = 150, height = 500, readOnly=TRUE, contextMenu = FALSE,
+			manualColumnResize = TRUE, dragColumns = FALSE) |>
+	      hot_col(1, dateFormat = "YYYY-MM-DD", type = "date")
+	  })
+
+	  output$download_df7320.1 <- downloadHandler(
+	    filename = function() { "df7320.1.xlsx" },
+	    content = function(file) {
+	      write.xlsx(data$df7320.1, file)
+	  })
+
+	  output$download_df7320.1_2 <- downloadHandler(
+	    filename = function() { "df7320.1_2.xlsx" },
+	    content = function(file) {
+	      write.xlsx(data$df7320.1_2, file)
+	  })
+
 #**********
 
 	#ЗАГРУЗКА ДАННЫХ
@@ -4238,6 +6303,15 @@ observeEvent(input$dates7210, {
 	  if (input$check_7210_1) {
 	    tables_to_load$df7210_1 <- load_merged_session_data("app_data_7210_1", session_id)
 	  }
+	  if (input$check_7310_1) {
+	    tables_to_load$df7310.1 <- load_merged_session_data("app_data_7310_1", session_id)
+	  }
+	  if (input$check_7310_2) {
+	    tables_to_load$df7310.2 <- load_merged_session_data("app_data_7310_2", session_id)
+	  }
+	  if (input$check_7320_1) {
+	    tables_to_load$df7320.1 <- load_merged_session_data("app_data_7320_1", session_id)
+	  }
 	  return(tables_to_load)
 	}
 
@@ -4247,7 +6321,7 @@ observeEvent(input$dates7210, {
   
 	  # Проверяем, выбрана ли хотя бы одна таблица
 		if (!any(c(input$check_7010_1, input$check_7110_1,
-			input$check_7210_1))) {
+			input$check_7210_1, input$check_7310_1, input$check_7310_2, input$check_7320_1))) {
 	    shinyalert("Ошибка", "Не выбрана ни одна таблица для загрузки.", type = "error")
 	    return()
 	  }
@@ -4326,6 +6400,60 @@ observeEvent(input$dates7210, {
                                 "Счет № (дебет)", "Счет № (кредит)",
                                 "Сальдо конечное", "Пользователь"))
           }
+        } else if (table_name == "df7310.1") {
+                expected_cols <- c("operation_date", "operation_time",
+                                "document_number",  "expense_account",
+				"expense_period", "operation_description",
+                                "accounting_method", "initial_balance",
+                                "credit", "debit", "correspondence_debit",
+                                "correspondence_credit", "final_balance", "username")
+                
+                if (all(expected_cols %in% names(df))) {
+                        setnames(df, expected_cols,
+                                c("Дата операции", "Время проводки",
+                                "Учетный номер", "Счет № статьи расхода",
+				"Период, к которому относятся расходы",
+				"Содержание операции", "Метод учета", 
+				"Сальдо начальное", "Кредит", "Дебет",
+                                "Счет № (дебет)", "Счет № (кредит)",
+                                "Сальдо конечное", "Пользователь"))
+          }
+        } else if (table_name == "df7310.2") {
+                expected_cols <- c("operation_date", "operation_time",
+                                "document_number",  "expense_account",
+				"expense_period", "operation_description",
+                                "accounting_method", "initial_balance",
+                                "credit", "debit", "correspondence_debit",
+                                "correspondence_credit", "final_balance", "username")
+                
+                if (all(expected_cols %in% names(df))) {
+                        setnames(df, expected_cols,
+                                c("Дата операции", "Время проводки",
+                                "Учетный номер", "Счет № статьи расхода",
+				"Период, к которому относятся расходы",
+				"Содержание операции", "Метод учета", 
+				"Сальдо начальное", "Кредит", "Дебет",
+                                "Счет № (дебет)", "Счет № (кредит)",
+                                "Сальдо конечное", "Пользователь"))
+          }
+        } else if (table_name == "df7320.1") {
+                expected_cols <- c("operation_date", "operation_time",
+                                "document_number",  "expense_account",
+				"expense_period", "operation_description",
+                                "accounting_method", "initial_balance",
+                                "credit", "debit", "correspondence_debit",
+                                "correspondence_credit", "final_balance", "username")
+                
+                if (all(expected_cols %in% names(df))) {
+                        setnames(df, expected_cols,
+                                c("Дата операции", "Время проводки",
+                                "Учетный номер", "Счет № статьи расхода",
+				"Период, к которому относятся расходы",
+				"Содержание операции", "Метод учета", 
+				"Сальдо начальное", "Кредит", "Дебет",
+                                "Счет № (дебет)", "Счет № (кредит)",
+                                "Сальдо конечное", "Пользователь"))
+          }
         }
         
         # Сохраняем файл с автоматическим именем
@@ -4361,34 +6489,37 @@ observeEvent(input$dates7210, {
   })
 })
 
-# Обработчик для кнопки "Загрузить все таблицы"
-observeEvent(input$load_all_btn, {
-  req(input$data_load_date)
-  
-  r$show_loading <- TRUE
-  
-  tryCatch({
-    # Загружаем данные всех таблиц
-    session_id <- paste("сессия", format(input$data_load_date, "%Y-%m-%d"))
-    
-    tables_data <- list(
-      df7010_1 = load_merged_session_data("app_data_7010_1", session_id),
-      df7110_1 = load_merged_session_data("app_data_7110_1", session_id),
-      df7210_1 = load_merged_session_data("app_data_7210_1", session_id)
-    )
-    
-    # Проверяем, есть ли данные
-    if (all(sapply(tables_data, is.null))) {
-      shinyalert("Информация", "Нет данных для выбранной даты.", type = "info")
-      return()
-    }
-    
-    # Создаем временную директорию для файлов
-    temp_dir <- tempdir()
-    zip_file <- file.path(temp_dir, paste0("all_tables_", format(input$data_load_date, "%Y-%m-%d"), ".zip"))
-    
-    # Создаем список файлов для архивации
-    files_to_zip <- c()
+	# Обработчик для кнопки "Загрузить все таблицы"
+	observeEvent(input$load_all_btn, {
+	  req(input$data_load_date)
+	  
+	  r$show_loading <- TRUE
+	  
+	  tryCatch({
+	    # Загружаем данные всех таблиц
+	    session_id <- paste("сессия", format(input$data_load_date, "%Y-%m-%d"))
+	    
+	    tables_data <- list(
+	      df7010_1 = load_merged_session_data("app_data_7010_1", session_id),
+	      df7110_1 = load_merged_session_data("app_data_7110_1", session_id),
+	      df7210_1 = load_merged_session_data("app_data_7210_1", session_id),
+	      df7310.1 = load_merged_session_data("app_data_7310_1", session_id),
+	      df7310.2 = load_merged_session_data("app_data_7310_2", session_id),
+	      df7320.1 = load_merged_session_data("app_data_7320_1", session_id)
+	    )
+	    
+	    # Проверяем, есть ли данные
+	    if (all(sapply(tables_data, is.null))) {
+	      shinyalert("Информация", "Нет данных для выбранной даты.", type = "info")
+	      return()
+	    }
+	    
+	    # Создаем временную директорию для файлов
+	    temp_dir <- tempdir()
+	    zip_file <- file.path(temp_dir, paste0("all_tables_", format(input$data_load_date, "%Y-%m-%d"), ".zip"))
+	    
+	    # Создаем список файлов для архивации
+	    files_to_zip <- c()
     
 	# Сохраняем каждую таблицу в отдельный файл Excel
 	for (table_name in names(tables_data)) {
@@ -4445,40 +6576,94 @@ observeEvent(input$load_all_btn, {
 				   "Счет № (дебет)", "Счет № (кредит)",
 				   "Сальдо конечное", "Пользователь"))
 	  }
-	}
+	} else if (table_name == "df7310.1") {
+                expected_cols <- c("operation_date", "operation_time",
+                                "document_number",  "expense_account",
+				"expense_period", "operation_description",
+                                "accounting_method", "initial_balance",
+                                "credit", "debit", "correspondence_debit",
+                                "correspondence_credit", "final_balance", "username")
+                
+                if (all(expected_cols %in% names(df))) {
+                        setnames(df, expected_cols,
+                                c("Дата операции", "Время проводки",
+                                "Учетный номер", "Счет № статьи расхода",
+				"Период, к которому относятся расходы",
+				"Содержание операции", "Метод учета", 
+				"Сальдо начальное", "Кредит", "Дебет",
+                                "Счет № (дебет)", "Счет № (кредит)",
+                                "Сальдо конечное", "Пользователь"))
+          }
+        } else if (table_name == "df7310.2") {
+                expected_cols <- c("operation_date", "operation_time",
+                                "document_number",  "expense_account",
+				"expense_period", "operation_description",
+                                "accounting_method", "initial_balance",
+                                "credit", "debit", "correspondence_debit",
+                                "correspondence_credit", "final_balance", "username")
+                
+                if (all(expected_cols %in% names(df))) {
+                        setnames(df, expected_cols,
+                                c("Дата операции", "Время проводки",
+                                "Учетный номер", "Счет № статьи расхода",
+				"Период, к которому относятся расходы",
+				"Содержание операции", "Метод учета", 
+				"Сальдо начальное", "Кредит", "Дебет",
+                                "Счет № (дебет)", "Счет № (кредит)",
+                                "Сальдо конечное", "Пользователь"))
+          }
+        } else if (table_name == "df7320.1") {
+                expected_cols <- c("operation_date", "operation_time",
+                                "document_number",  "expense_account",
+				"expense_period", "operation_description",
+                                "accounting_method", "initial_balance",
+                                "credit", "debit", "correspondence_debit",
+                                "correspondence_credit", "final_balance", "username")
+                
+                if (all(expected_cols %in% names(df))) {
+                        setnames(df, expected_cols,
+                                c("Дата операции", "Время проводки",
+                                "Учетный номер", "Счет № статьи расхода",
+				"Период, к которому относятся расходы",
+				"Содержание операции", "Метод учета", 
+				"Сальдо начальное", "Кредит", "Дебет",
+                                "Счет № (дебет)", "Счет № (кредит)",
+                                "Сальдо конечное", "Пользователь"))
+          }
+        }
         
-        # Сохраняем файл с автоматическим именем
-        file_name <- paste0(table_name, ".xlsx")
-        file_path <- file.path(temp_dir, file_name)
-        write.xlsx(df, file_path)
-        files_to_zip <- c(files_to_zip, file_path)
-      }
-    }
+	        # Сохраняем файл с автоматическим именем
+	        file_name <- paste0(table_name, ".xlsx")
+	        file_path <- file.path(temp_dir, file_name)
+	        write.xlsx(df, file_path)
+	        files_to_zip <- c(files_to_zip, file_path)
+	    }
+	  }
     
-    # Создаем ZIP-архив с помощью zip::zip
-    old_wd <- getwd()
-    setwd(temp_dir)
-    zip::zip(basename(zip_file), files = basename(files_to_zip), mode = "cherry-pick")
-    setwd(old_wd)
-    
-    # Скачиваем файл без запроса разрешения через JavaScript
-    session$sendCustomMessage(
-      "downloadFile",
-      list(
-        url = paste0("data:application/zip;base64,", base64enc::base64encode(zip_file)),
-        filename = paste0("all_tables_", format(input$data_load_date, "%Y-%m-%d"), ".zip")
-      )
-    )
-    
-    shinyalert("Успех", "Все таблицы успешно загружены и сохранены в ZIP-архиве.", type = "success")
-    
-  }, error = function(e) {
-    message("Ошибка при загрузке всех таблиц: ", e$message)
-    shinyalert("Ошибка", paste("Ошибка при загрузке данных:", e$message), type = "error")
-  }, finally = {
-    r$show_loading <- FALSE
-  })
-})
-
-}
-shinyApp(ui, server)
+	    # Создаем ZIP-архив с помощью zip::zip
+	    old_wd <- getwd()
+	    setwd(temp_dir)
+	    zip::zip(basename(zip_file), files = basename(files_to_zip), mode = "cherry-pick")
+	    setwd(old_wd)
+	    
+	    # Скачиваем файл без запроса разрешения через JavaScript
+	    session$sendCustomMessage(
+	      "downloadFile",
+	      list(
+	        url = paste0("data:application/zip;base64,", base64enc::base64encode(zip_file)),
+	        filename = paste0("all_tables_", format(input$data_load_date, "%Y-%m-%d"), ".zip")
+	      )
+	    )
+	    
+	    shinyalert("Успех", "Все таблицы успешно загружены и сохранены в ZIP-архиве.", type = "success")
+	    
+	  }, error = function(e) {
+	    message("Ошибка при загрузке всех таблиц: ", e$message)
+	    shinyalert("Ошибка", paste("Ошибка при загрузке данных:", e$message), type = "error")
+	  }, finally = {
+	    r$show_loading <- FALSE
+	  })
+	})
+	
+	}
+	shinyApp(ui, server)
